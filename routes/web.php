@@ -1,22 +1,25 @@
 <?php
 
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\HomeController;
 use Illuminate\Support\Facades\Route;
-
-// Les paramètres de Route::view (ex. {id}) sont transmis aux vues.
 
 // ── Public ───────────────────────────────────────────────
 Route::get('/', HomeController::class)->name('home');
 
 // ── Authentification ─────────────────────────────────────
-Route::view('/connexion', 'auth.login')->name('login');
-Route::post('/connexion', fn () => redirect()->route('otp.verify'))->name('otp.send');
-Route::view('/connexion/code', 'auth.verify')->name('otp.verify');
-Route::post('/connexion/code', fn () => redirect()->route('feed'))->name('otp.check');
-Route::view('/equipe/connexion', 'auth.staff-login')->name('staff.login');
-Route::post('/equipe/connexion', fn () => redirect()->route('staff.mfa'))->name('staff.attempt');
-Route::view('/equipe/verification', 'auth.mfa')->name('staff.mfa');
-Route::post('/equipe/verification', fn () => redirect()->route('ops.dashboard'))->name('staff.mfa.check');
+Route::get('/connexion', [AuthController::class, 'showLoginForm'])->name('login');
+Route::post('/connexion', [AuthController::class, 'sendOtp'])->name('otp.send');
+Route::get('/connexion/code', [AuthController::class, 'showVerifyForm'])->name('otp.verify');
+Route::post('/connexion/code', [AuthController::class, 'checkOtp'])->name('otp.check');
+
+Route::get('/equipe/connexion', [AuthController::class, 'showStaffLoginForm'])->name('staff.login');
+Route::post('/equipe/connexion', [AuthController::class, 'staffAttempt'])->name('staff.attempt');
+Route::get('/equipe/verification', [AuthController::class, 'showMfaForm'])->name('staff.mfa');
+Route::post('/equipe/verification', [AuthController::class, 'checkMfa'])->name('staff.mfa.check');
+
+Route::post('/deconnexion', [AuthController::class, 'logout'])->name('logout');
+Route::get('/deconnexion', [AuthController::class, 'logout'])->name('logout.get');
 
 // ── Client ───────────────────────────────────────────────
 Route::view('/restaurants', 'customer.feed')->name('feed');
@@ -29,8 +32,8 @@ Route::view('/mes-commandes/{id}', 'customer.order-show')->name('orders.show');
 Route::view('/compte', 'customer.account')->name('account');
 Route::view('/hors-zone', 'customer.out-of-zone')->name('out-of-zone');
 
-// ── Espace Partenaire (ajouter ->middleware(['auth', 'role:partner_owner,partner_staff'])) ──
-Route::prefix('partenaire')->group(function () {
+// ── Espace Partenaire (middleware: auth, role:partner_owner,partner_staff) ──
+Route::prefix('partenaire')->middleware(['auth', 'role:partner_owner,partner_staff'])->group(function () {
     Route::view('/', 'partner.dashboard')->name('partner.dashboard');
     Route::view('/commandes', 'partner.orders')->name('partner.orders');
     Route::view('/commandes/{id}', 'partner.order-show')->name('partner.orders.show');
@@ -38,16 +41,16 @@ Route::prefix('partenaire')->group(function () {
     Route::view('/releves', 'partner.statements')->name('partner.statements');
 });
 
-// ── Espace Livreur (middleware role:courier) ──────────────
-Route::prefix('livreur')->group(function () {
+// ── Espace Livreur (middleware: auth, role:courier) ──────────────
+Route::prefix('livreur')->middleware(['auth', 'role:courier'])->group(function () {
     Route::view('/', 'courier.dashboard')->name('courier.dashboard');
     Route::view('/courses/{id}', 'courier.delivery')->name('courier.delivery');
     Route::view('/cash-et-gains', 'courier.earnings')->name('courier.earnings');
     Route::view('/incident', 'courier.incident')->name('courier.incident');
 });
 
-// ── Espace Ops (middleware role:ops,admin,finance + MFA) ──
-Route::prefix('ops')->group(function () {
+// ── Espace Ops (middleware: auth, role:ops,admin,finance) ──
+Route::prefix('ops')->middleware(['auth', 'role:ops,admin,finance'])->group(function () {
     Route::view('/', 'ops.dashboard')->name('ops.dashboard');
     Route::view('/commandes', 'ops.orders')->name('ops.orders');
     Route::view('/commandes/{id}', 'ops.order-show')->name('ops.orders.show');
@@ -63,11 +66,10 @@ Route::prefix('ops')->group(function () {
     Route::view('/audit', 'ops.audit')->name('ops.audit');
 });
 
-// ── Raccourcis et tests ───────────────────────────────────
+// ── Raccourcis et alias ───────────────────────────────────
 Route::get('/test', function () {
     return view('teste');
 });
 
-Route::view('/partner', 'portal', ['role' => 'partner'])->name('portal.partner');
-Route::view('/courier', 'portal', ['role' => 'courier'])->name('portal.courier');
-Route::view('/ops', 'portal', ['role' => 'ops'])->name('portal.ops');
+Route::redirect('/partner', '/partenaire')->name('portal.partner');
+Route::redirect('/courier', '/livreur')->name('portal.courier');

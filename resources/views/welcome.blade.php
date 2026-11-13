@@ -2,27 +2,52 @@
 
 @section('body')
 <nav>
-    <div class="wrap">
-        <a class="brand" href="#top"><span class="logo" role="img" aria-label="Logo Cooked by Us"></span>Cooked by Us</a>
+    <div class="wrap" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <a class="brand" href="{{ route('home') }}">
+            <span class="logo" role="img" aria-label="Logo FromDarna"></span>
+            FromDarna · <span class="ar" style="font-size:18px;color:var(--rust)">من دارنا</span>
+        </a>
         <ul>
             <li><a href="#villes">Nos villes</a></li>
             <li><a href="#comment">Comment ça marche</a></li>
             <li><a href="#pourquoi">Nos engagements</a></li>
+            <li><a href="{{ route('staff.login') }}" style="color:var(--rust);font-weight:700">Espace équipe</a></li>
         </ul>
-        <a class="btn" href="{{ route('feed') }}">Commander</a>
+        <div style="display:flex;align-items:center;gap:10px">
+            @auth
+                <span class="bd g" style="font-size:13px">👤 {{ Auth::user()->name }}</span>
+                @if(Auth::user()->isPartner())
+                    <a class="btn sm" href="{{ route('partner.dashboard') }}">Mon Restaurant</a>
+                @elseif(Auth::user()->isCourier())
+                    <a class="btn sm" href="{{ route('courier.dashboard') }}">Mes Courses</a>
+                @elseif(Auth::user()->isOps())
+                    <a class="btn sm" href="{{ route('ops.dashboard') }}">Console Ops</a>
+                @else
+                    <a class="btn sm" href="{{ route('feed') }}">Commander</a>
+                @endif
+                <form method="POST" action="{{ route('logout') }}" style="display:inline">
+                    @csrf
+                    <button type="submit" class="btn ghost sm" style="padding:0 14px" title="Se déconnecter">Déconnexion</button>
+                </form>
+            @else
+                <a class="btn ghost sm" href="{{ route('login') }}">Connexion Client</a>
+                <a class="btn sm" href="{{ route('feed') }}">Commander</a>
+            @endauth
+        </div>
     </div>
 </nav>
 
 <header class="hero" id="top">
     <div class="wrap">
         <div>
-            <span class="pill"><i></i>Bientôt dans le Cap Bon ouest</span>
+            <span class="pill"><i></i>Bientôt dans le Cap Bon ouest · Grombalia</span>
             <h1>Les plats de chez nous, <em>livrés</em> jusqu’à votre porte.</h1>
             <span class="ar ar-line">أكلة من دارنا، توصلك لين دارك</span>
             <p>Restaurants, pâtisseries et cafés de votre ville, réunis au même endroit. Vous voyez le prix total avant de confirmer, et vous payez en cash à la livraison.</p>
             <div class="acts">
                 <a class="btn" href="{{ route('feed') }}">Voir les restaurants</a>
-                <a class="btn ghost" href="https://wa.me/{{ config('cooked.whatsapp') }}">Commander sur WhatsApp</a>
+                <a class="btn ghost" href="{{ route('login') }}">Se connecter</a>
+                <a class="btn ghost" href="https://wa.me/{{ config('cooked.whatsapp') }}">WhatsApp</a>
             </div>
         </div>
         <div class="emblem">
@@ -89,7 +114,7 @@
             <p>Écrivez-nous sur WhatsApp pour commander ou pour être prévenu(e) de l’ouverture chez vous. Vous êtes restaurateur ou livreur ? Dites-le aussi.</p>
             <div class="acts" style="justify-content:center">
                 <a class="btn" href="https://wa.me/{{ config('cooked.whatsapp') }}">Écrire sur WhatsApp</a>
-                <a class="btn ghost" href="tel:{{ config('cooked.phone') }}">Appeler</a>
+                <a class="btn ghost" href="{{ route('staff.login') }}">Espace Partenaires & Livreurs</a>
             </div>
         </div>
     </div>

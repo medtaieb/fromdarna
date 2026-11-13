@@ -32,6 +32,10 @@
         @endforeach
     @endforeach
 
-    {{-- TODO : formulaire POST de déconnexion avec @csrf --}}
-    <a class="sl" href="{{ route('staff.login') }}" style="margin-top:auto">Se déconnecter</a>
+    <form method="POST" action="{{ route('logout') }}" style="margin-top:auto">
+        @csrf
+        <button type="submit" class="sl" style="width:100%;background:none;border:0;cursor:pointer;font:inherit;text-align:left">
+            🚪 Se déconnecter
+        </button>
+    </form>
 </aside>
