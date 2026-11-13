@@ -179,13 +179,22 @@ class AuthController extends Controller
     }
 
     /**
-     * Déconnexion
+     * Déconnexion sécurisée (GET ou POST)
      */
     public function logout(Request $request)
     {
+        $isStaff = false;
+        if (Auth::check() && !Auth::user()->isCustomer()) {
+            $isStaff = true;
+        }
+
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
+        if ($isStaff || Str::contains(url()->previous(), ['partenaire', 'livreur', 'ops', 'staff'])) {
+            return redirect()->route('staff.login')->with('info', 'Vous avez été déconnecté avec succès.');
+        }
 
         return redirect()->route('home')->with('info', 'Vous êtes maintenant déconnecté.');
     }

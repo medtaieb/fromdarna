@@ -25,10 +25,7 @@
                 @else
                     <a class="btn sm" href="{{ route('feed') }}">Commander</a>
                 @endif
-                <form method="POST" action="{{ route('logout') }}" style="display:inline">
-                    @csrf
-                    <button type="submit" class="btn ghost sm" style="padding:0 14px" title="Se déconnecter">Déconnexion</button>
-                </form>
+                <a class="btn ghost sm" href="{{ route('logout') }}" style="padding:0 14px" title="Se déconnecter">Déconnexion</a>
             @else
                 <a class="btn ghost sm" href="{{ route('login') }}">Connexion Client</a>
                 <a class="btn sm" href="{{ route('feed') }}">Commander</a>

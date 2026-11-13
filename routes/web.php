@@ -18,8 +18,8 @@ Route::post('/equipe/connexion', [AuthController::class, 'staffAttempt'])->name(
 Route::get('/equipe/verification', [AuthController::class, 'showMfaForm'])->name('staff.mfa');
 Route::post('/equipe/verification', [AuthController::class, 'checkMfa'])->name('staff.mfa.check');
 
-Route::post('/deconnexion', [AuthController::class, 'logout'])->name('logout');
-Route::get('/deconnexion', [AuthController::class, 'logout'])->name('logout.get');
+Route::match(['get', 'post'], '/deconnexion', [AuthController::class, 'logout'])->name('logout');
+Route::match(['get', 'post'], '/logout', [AuthController::class, 'logout']);
 
 // ── Client ───────────────────────────────────────────────
 Route::view('/restaurants', 'customer.feed')->name('feed');

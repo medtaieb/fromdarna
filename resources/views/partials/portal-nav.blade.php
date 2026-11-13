@@ -32,10 +32,7 @@
         @endforeach
     @endforeach
 
-    <form method="POST" action="{{ route('logout') }}" style="margin-top:auto">
-        @csrf
-        <button type="submit" class="sl" style="width:100%;background:none;border:0;cursor:pointer;font:inherit;text-align:left">
-            🚪 Se déconnecter
-        </button>
-    </form>
+    <a class="sl" href="{{ route('logout') }}" style="margin-top:auto">
+        🚪 Se déconnecter
+    </a>
 </aside>
