@@ -3,11 +3,32 @@
 
 @section('content')
 <x-title title="Mes commandes" />
+
+@if(session('success'))<div class="flash ok" role="alert">{{ session('success') }}</div>@endif
+
 <x-card>
-    @php
-        $rows = array_map(fn ($o) => [$o['id'] . '|' . $o['time'], $o['store'], \App\Support\Money::tnd($o['total']), \App\Support\Sample::badge($o['status'])], array_slice(\App\Support\Sample::orders(), 0, 4));
-    @endphp
-    <x-table :headers="['Commande', 'Restaurant', 'Total', 'Statut']" :rows="$rows" />
-    <x-btn variant="ghost" size="sm" :href="route('orders.show', 1043)">Suivre ma dernière commande</x-btn>
+@if(Auth::check() && $orders->count())
+    <x-table
+        :headers="['Ref.', 'Restaurant', 'Total', 'Statut']"
+        :rows="$orders->map(fn($o) => [
+            $o->ref . '|' . $o->created_at->format('d/m H:i'),
+            $o->store->name,
+            \App\Support\Money::tnd($o->total_millimes),
+            $o->statusBadgeType() . ':' . $o->statusLabel(),
+        ])->toArray()"
+    />
+    <div style="margin-top:16px">{{ $orders->links() }}</div>
+@elseif(!Auth::check())
+    <div style="text-align:center;padding:24px">
+        <p class="mut">Connectez-vous pour voir vos commandes.</p>
+        <x-btn :href="route('login')" style="margin-top:12px">Se connecter</x-btn>
+    </div>
+@else
+    <div style="text-align:center;padding:24px">
+        <span style="font-size:36px">📦</span>
+        <p class="mut" style="margin-top:8px">Vous n'avez pas encore passé de commande.</p>
+        <x-btn :href="route('feed')" style="margin-top:12px">Voir les restaurants</x-btn>
+    </div>
+@endif
 </x-card>
 @endsection

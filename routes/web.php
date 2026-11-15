@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PartnerController;
 use Illuminate\Support\Facades\Route;
 
@@ -26,11 +27,15 @@ Route::match(['get', 'post'], '/logout', [AuthController::class, 'logout']);
 // ── Client ───────────────────────────────────────────────
 Route::get('/restaurants', [CustomerController::class, 'feed'])->name('feed');
 Route::get('/restaurants/{id}', [CustomerController::class, 'store'])->whereNumber('id')->name('store');
-Route::view('/panier', 'customer.cart')->name('cart');
-Route::view('/commande', 'customer.checkout')->name('checkout');
-Route::post('/commande', fn () => redirect()->route('orders.show', 1043))->name('orders.place');
-Route::view('/mes-commandes', 'customer.orders')->name('orders.index');
-Route::view('/mes-commandes/{id}', 'customer.order-show')->name('orders.show');
+Route::get('/panier', [OrderController::class, 'cart'])->name('cart');
+Route::post('/panier/ajouter', [OrderController::class, 'addToCart'])->name('cart.add');
+Route::patch('/panier/{cartItem}', [OrderController::class, 'updateCart'])->name('cart.update');
+Route::delete('/panier/{cartItem}', [OrderController::class, 'removeFromCart'])->name('cart.remove');
+Route::post('/panier/vider', [OrderController::class, 'clearCart'])->name('cart.clear');
+Route::get('/commande', [OrderController::class, 'checkout'])->name('checkout');
+Route::post('/commande', [OrderController::class, 'placeOrder'])->name('orders.place');
+Route::get('/mes-commandes', [OrderController::class, 'orders'])->name('orders.index');
+Route::get('/mes-commandes/{order}', [OrderController::class, 'orderShow'])->name('orders.show');
 Route::get('/compte', [CustomerController::class, 'account'])->name('account');
 Route::post('/compte/profil', [CustomerController::class, 'updateProfile'])->name('account.profile');
 Route::post('/compte/adresses', [CustomerController::class, 'storeAddress'])->name('account.address.store');

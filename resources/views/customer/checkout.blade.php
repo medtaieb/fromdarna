@@ -2,19 +2,20 @@
 @section('title', 'Confirmer la commande')
 
 @section('content')
-<x-title title="Confirmer la commande" sub="Dar Zitouna · paiement en cash à la livraison" />
+<x-title title="Confirmer la commande" :sub="$store->name . ' · paiement en cash à la livraison'" />
+
+@if($errors->any())
+    <div class="flash warn" role="alert">
+        <ul style="margin:0;padding-left:18px">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
+    </div>
+@endif
 
 <form method="POST" action="{{ route('orders.place') }}" class="cols">
     @csrf
-    {{-- Clé d'idempotence : évite les doublons si le client touche deux fois --}}
     <input type="hidden" name="idempotency_key" value="{{ (string) \Illuminate\Support\Str::uuid() }}">
 
     <div class="stack">
         <x-card>
-            @php
-                $user = Auth::user();
-                $savedAddress = $user?->defaultAddress ?? $user?->addresses()->first();
-            @endphp
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
                 <h2>Où livrer ?</h2>
                 @if($user)
@@ -31,7 +32,7 @@
                 </div>
             @endif
 
-            <div class="map"><span>Déplacez l’épingle sur votre porte à Grombalia</span></div>
+            <div class="map"><span>Déplacez l'épingle sur votre porte à {{ $store->zone->name }}</span></div>
             <x-field label="Repère indispensable *" name="landmark" placeholder="En face de la pharmacie, portail vert…" :value="old('landmark', $savedAddress?->landmark)" required />
             <div class="grid g3">
                 <x-field label="Bâtiment" name="building" :value="old('building', $savedAddress?->building)" />
@@ -39,22 +40,28 @@
                 <x-field label="Porte" name="door" :value="old('door', $savedAddress?->door)" />
             </div>
             <x-field label="Téléphone pour le livreur" name="phone" type="tel" placeholder="+216 20 123 456" :value="old('phone', $savedAddress?->contact_phone ?? $user?->phone ?? '+216 20 123 456')" required />
+            <textarea name="note" class="f" placeholder="Note pour le restaurant (sans piment, sans oignon…)" style="margin-top:8px">{{ old('note') }}</textarea>
         </x-card>
 
         <x-card>
             <h2>Paiement</h2>
             <label class="ck"><input type="radio" name="payment" value="cash" checked> Cash à la livraison (Espèces)</label>
-            <label class="ck" style="opacity:.55"><input type="radio" name="payment" value="online" disabled> Carte bancaire, D17, Flouci <x-badge type="x">Bientôt au Lot 2</x-badge></label>
+            <label class="ck" style="opacity:.55"><input type="radio" name="payment" value="online" disabled> Carte bancaire, D17, Flouci <x-badge type="x">Bientôt</x-badge></label>
         </x-card>
     </div>
 
     <x-card>
-        <h2>Récapitulatif</h2>
-        <div class="sum"><span>1 × Couscous à l’agneau</span><span>@tnd(18000)</span></div>
-        <div class="sum"><span>2 × Brik à l’œuf</span><span>@tnd(7000)</span></div>
-        <div class="sum"><span>Livraison (Grombalia)</span><span>@tnd(3000)</span></div>
-        <div class="sum t"><span>Total à payer</span><span>@tnd(28000)</span></div>
+        <h2>Récapitulatif — {{ $store->name }}</h2>
+        @foreach($items as $item)
+            <div class="sum">
+                <span>{{ $item->quantity }} × {{ $item->product->name }}</span>
+                <span>@tnd($item->line_total)</span>
+            </div>
+        @endforeach
+        <div class="sum"><span>Livraison ({{ $store->zone->name }})</span><span>@tnd($fee)</span></div>
+        <div class="sum t"><span>Total à payer</span><span>@tnd($total)</span></div>
         <button class="btn block" type="submit">Confirmer la commande (Cash)</button>
+        <a href="{{ route('cart') }}" class="btn ghost sm block" style="margin-top:8px">← Modifier le panier</a>
     </x-card>
 </form>
 @endsection
