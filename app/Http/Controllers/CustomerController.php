@@ -12,7 +12,45 @@ class CustomerController extends Controller
 {
     public function login() { return view('customer.login'); }
     public function home() { return view('customer.home', ['stores' => Demo::stores()]); }
-    public function store(int $id) { return view('customer.store', ['store' => Demo::store($id)]); }
+    public function feed(Request $request)
+    {
+        $category = $request->query('category', 'all');
+        $zoneSlug = $request->query('zone');
+        $zones = \App\Models\Zone::orderBy('name')->get();
+        $query = \App\Models\Store::with('zone');
+
+        if ($category === 'restaurants') {
+            $query->where(function($q) {
+                $q->where('kind', 'like', '%Cuisine%')
+                  ->orWhere('kind', 'like', '%Grillades%')
+                  ->orWhere('kind', 'like', '%Poisson%')
+                  ->orWhere('kind', 'like', '%Sandwich%');
+            });
+        } elseif ($category === 'patisseries') {
+            $query->where('kind', 'like', '%Pâtisserie%');
+        } elseif ($category === 'cafes') {
+            $query->where('kind', 'like', '%Café%');
+        }
+
+        if ($zoneSlug) {
+            $query->whereHas('zone', fn($q) => $q->where('slug', $zoneSlug));
+        }
+
+        $stores = $query->orderByDesc('is_open')->get();
+
+        // Trouver la zone active pour l'affichage
+        $activeZone = $zoneSlug ? $zones->firstWhere('slug', $zoneSlug) : null;
+
+        return view('customer.feed', compact('stores', 'category', 'zones', 'zoneSlug', 'activeZone'));
+    }
+
+    public function store($id)
+    {
+        $store = \App\Models\Store::with('categories.products.options')->find($id) 
+            ?? \App\Models\Store::with('categories.products.options')->first();
+
+        return view('customer.store', compact('store'));
+    }
     public function cart() { return view('customer.cart'); }
     public function track() { return view('customer.track'); }
     public function orders() { return view('customer.orders'); }

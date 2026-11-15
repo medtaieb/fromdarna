@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\PartnerController;
 use Illuminate\Support\Facades\Route;
 
 // ── Public ───────────────────────────────────────────────
@@ -23,8 +24,8 @@ Route::match(['get', 'post'], '/deconnexion', [AuthController::class, 'logout'])
 Route::match(['get', 'post'], '/logout', [AuthController::class, 'logout']);
 
 // ── Client ───────────────────────────────────────────────
-Route::view('/restaurants', 'customer.feed')->name('feed');
-Route::view('/restaurants/{id}', 'customer.store')->whereNumber('id')->name('store');
+Route::get('/restaurants', [CustomerController::class, 'feed'])->name('feed');
+Route::get('/restaurants/{id}', [CustomerController::class, 'store'])->whereNumber('id')->name('store');
 Route::view('/panier', 'customer.cart')->name('cart');
 Route::view('/commande', 'customer.checkout')->name('checkout');
 Route::post('/commande', fn () => redirect()->route('orders.show', 1043))->name('orders.place');
@@ -40,10 +41,12 @@ Route::view('/hors-zone', 'customer.out-of-zone')->name('out-of-zone');
 
 // ── Espace Partenaire (middleware: auth, role:partner_owner,partner_staff) ──
 Route::prefix('partenaire')->middleware(['auth', 'role:partner_owner,partner_staff'])->group(function () {
-    Route::view('/', 'partner.dashboard')->name('partner.dashboard');
+    Route::get('/', [PartnerController::class, 'dashboard'])->name('partner.dashboard');
     Route::view('/commandes', 'partner.orders')->name('partner.orders');
     Route::view('/commandes/{id}', 'partner.order-show')->name('partner.orders.show');
-    Route::view('/menu', 'partner.products')->name('partner.products');
+    Route::get('/menu', [PartnerController::class, 'products'])->name('partner.products');
+    Route::post('/produits/{product}/toggle', [PartnerController::class, 'toggleProduct'])->name('partner.products.toggle');
+    Route::post('/magasin/{store}/toggle', [PartnerController::class, 'toggleStoreStatus'])->name('partner.store.toggle');
     Route::view('/releves', 'partner.statements')->name('partner.statements');
 });
 
