@@ -57,7 +57,7 @@
         @if($subtotal < 10000)
             <p class="mut" style="color:var(--r)">⚠️ Commande minimum : 10,000 TND</p>
         @endif
-        <x-btn :href="route('checkout')" block>Continuer vers la livraison</x-btn>
+        <x-btn :href="route('checkout')" block class="glow grad-animate">Continuer vers la livraison</x-btn>
         <form method="POST" action="{{ route('cart.clear') }}" style="margin-top:8px">
             @csrf
             <button type="submit" class="btn ghost sm block">Vider le panier</button>

@@ -14,11 +14,11 @@
 
 {{-- ── Sélection de zone ────────────────────────────── --}}
 <div class="chips" role="group" aria-label="Zones de livraison">
-    <a class="chip {{ !$zoneSlug ? 'on' : '' }}" href="{{ route('feed', array_filter(['category' => $category !== 'all' ? $category : null])) }}">
+    <a class="chip {{ !$zoneSlug ? 'on glow' : '' }}" href="{{ route('feed', array_filter(['category' => $category !== 'all' ? $category : null])) }}">
         🗺️ Toutes les zones
     </a>
     @foreach($zones as $zone)
-        <a class="chip {{ $zoneSlug === $zone->slug ? 'on' : '' }}" href="{{ route('feed', array_filter(['zone' => $zone->slug, 'category' => $category !== 'all' ? $category : null])) }}">
+        <a class="chip {{ $zoneSlug === $zone->slug ? 'on glow-brand grad-animate' : '' }}" href="{{ route('feed', array_filter(['zone' => $zone->slug, 'category' => $category !== 'all' ? $category : null])) }}">
             {{ $zone->name }}
         </a>
     @endforeach
@@ -41,7 +41,7 @@
 </div>
 
 {{-- ── Grille de restaurants ────────────────────────── --}}
-<div class="grid g3">
+<div class="grid g3 fade-in">
     @forelse ($stores as $store)
         <x-store-card :store="$store" />
     @empty

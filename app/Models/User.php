@@ -57,6 +57,16 @@ class User extends Authenticatable
         return $this->hasOne(Address::class)->where('is_default', true)->latestOfMany();
     }
 
+    public function courierLocation(): HasOne
+    {
+        return $this->hasOne(CourierLocation::class);
+    }
+
+    public function assignedOrders(): HasMany
+    {
+        return $this->hasMany(Order::class, 'courier_id');
+    }
+
     public function hasRole(...$roles): bool
     {
         return in_array($this->role, $roles, true);

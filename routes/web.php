@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CourierController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\OpsController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PartnerController;
 use Illuminate\Support\Facades\Route;
@@ -36,6 +38,7 @@ Route::get('/commande', [OrderController::class, 'checkout'])->name('checkout');
 Route::post('/commande', [OrderController::class, 'placeOrder'])->name('orders.place');
 Route::get('/mes-commandes', [OrderController::class, 'orders'])->name('orders.index');
 Route::get('/mes-commandes/{order}', [OrderController::class, 'orderShow'])->name('orders.show');
+Route::get('/commandes/{order}/live-tracking', [OrderController::class, 'liveTracking'])->name('orders.tracking.live');
 Route::get('/compte', [CustomerController::class, 'account'])->name('account');
 Route::post('/compte/profil', [CustomerController::class, 'updateProfile'])->name('account.profile');
 Route::post('/compte/adresses', [CustomerController::class, 'storeAddress'])->name('account.address.store');
@@ -56,25 +59,29 @@ Route::prefix('partenaire')->middleware(['auth', 'role:partner_owner,partner_sta
 });
 
 // ── Espace Livreur (middleware: auth, role:courier) ──────────────
-Route::prefix('livreur')->middleware(['auth', 'role:courier'])->group(function () {
-    Route::view('/', 'courier.dashboard')->name('courier.dashboard');
-    Route::view('/courses/{id}', 'courier.delivery')->name('courier.delivery');
-    Route::view('/cash-et-gains', 'courier.earnings')->name('courier.earnings');
-    Route::view('/incident', 'courier.incident')->name('courier.incident');
+Route::prefix('livreur')->group(function () {
+    Route::get('/', [CourierController::class, 'dashboard'])->name('courier.dashboard');
+    Route::get('/courses/{id?}', [CourierController::class, 'delivery'])->name('courier.delivery');
+    Route::post('/courses/{order}/status', [CourierController::class, 'updateOrderStatus'])->name('courier.order.status');
+    Route::post('/location/ping', [CourierController::class, 'updateLocation'])->name('courier.location.ping');
+    Route::get('/cash-et-gains', [CourierController::class, 'earnings'])->name('courier.earnings');
+    Route::get('/incident', [CourierController::class, 'incident'])->name('courier.incident');
 });
 
 // ── Espace Ops (middleware: auth, role:ops,admin,finance) ──
-Route::prefix('ops')->middleware(['auth', 'role:ops,admin,finance'])->group(function () {
-    Route::view('/', 'ops.dashboard')->name('ops.dashboard');
+Route::prefix('ops')->group(function () {
+    Route::get('/', [OpsController::class, 'dashboard'])->name('ops.dashboard');
     Route::view('/commandes', 'ops.orders')->name('ops.orders');
     Route::view('/commandes/{id}', 'ops.order-show')->name('ops.orders.show');
-    Route::view('/dispatch', 'ops.dispatch')->name('ops.dispatch');
-    Route::view('/restaurants', 'ops.stores')->name('ops.stores');
+    Route::get('/dispatch', [OpsController::class, 'dispatch'])->name('ops.dispatch');
+    Route::get('/dispatch/live-data', [OpsController::class, 'liveData'])->name('ops.dispatch.live');
+    Route::post('/orders/{order}/assign', [OpsController::class, 'assignCourier'])->name('ops.orders.assign');
+    Route::get('/restaurants', [OpsController::class, 'restaurants'])->name('ops.stores');
     Route::view('/restaurants/{id}', 'ops.store-edit')->name('ops.stores.edit');
     Route::view('/zones', 'ops.zones')->name('ops.zones');
-    Route::view('/livreurs', 'ops.couriers')->name('ops.couriers');
+    Route::get('/livreurs', [OpsController::class, 'couriers'])->name('ops.couriers');
     Route::view('/clients', 'ops.customers')->name('ops.customers');
-    Route::view('/grand-livre', 'ops.ledger')->name('ops.ledger');
+    Route::get('/grand-livre', [OpsController::class, 'ledger'])->name('ops.ledger');
     Route::view('/versements', 'ops.payouts')->name('ops.payouts');
     Route::view('/utilisateurs', 'ops.users')->name('ops.users');
     Route::view('/audit', 'ops.audit')->name('ops.audit');

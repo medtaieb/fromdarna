@@ -149,6 +149,8 @@ class OrderController extends Controller
             'building'        => 'nullable|string|max:50',
             'floor'           => 'nullable|string|max:20',
             'door'            => 'nullable|string|max:20',
+            'delivery_lat'    => 'nullable|numeric',
+            'delivery_lng'    => 'nullable|numeric',
         ], [
             'landmark.required' => 'Le repère de livraison est obligatoire.',
             'phone.required'    => 'Le numéro de téléphone est obligatoire.',
@@ -184,6 +186,8 @@ class OrderController extends Controller
                 'delivery_floor'        => $validated['floor'] ?? null,
                 'delivery_door'         => $validated['door'] ?? null,
                 'delivery_phone'        => $validated['phone'],
+                'delivery_lat'          => !empty($validated['delivery_lat']) ? (float)$validated['delivery_lat'] : ($store->latitude ?? 36.6191),
+                'delivery_lng'          => !empty($validated['delivery_lng']) ? (float)$validated['delivery_lng'] : ($store->longitude ?? 10.5012),
                 'delivery_code'         => str_pad(random_int(1000, 9999), 4, '0', STR_PAD_LEFT),
                 'customer_note'         => $validated['note'] ?? null,
                 'idempotency_key'       => $ikey,
@@ -237,8 +241,40 @@ class OrderController extends Controller
      */
     public function orderShow(Order $order)
     {
-        $order->load(['store', 'zone', 'items.product']);
+        $order->load(['store.zone', 'zone', 'items.product', 'courier.courierLocation']);
         return view('customer.order-show', compact('order'));
+    }
+
+    /**
+     * API JSON de suivi en direct pour le client
+     */
+    public function liveTracking(Order $order)
+    {
+        $order->load(['store', 'courier.courierLocation']);
+
+        return response()->json([
+            'status'       => $order->status,
+            'status_label' => $order->statusLabel(),
+            'status_badge' => $order->statusBadgeType(),
+            'store' => [
+                'name' => $order->store->name,
+                'lat'  => (float)($order->store->latitude ?? 36.6175),
+                'lng'  => (float)($order->store->longitude ?? 10.4990),
+            ],
+            'customer' => [
+                'landmark' => $order->delivery_landmark,
+                'lat'      => (float)($order->delivery_lat ?? 36.6191),
+                'lng'      => (float)($order->delivery_lng ?? 10.5012),
+            ],
+            'courier' => $order->courier ? [
+                'name'      => $order->courier->name,
+                'phone'     => $order->courier->phone,
+                'lat'       => (float)($order->courier->courierLocation?->latitude ?? 36.6185),
+                'lng'       => (float)($order->courier->courierLocation?->longitude ?? 10.5020),
+                'heading'   => (float)($order->courier->courierLocation?->heading ?? 0),
+                'last_ping' => $order->courier->courierLocation?->last_ping_at?->diffForHumans() ?? 'Récemment',
+            ] : null,
+        ]);
     }
 
     // ── Helpers privés ───────────────────────────────────────────────────

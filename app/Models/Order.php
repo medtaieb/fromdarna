@@ -12,8 +12,9 @@ class Order extends Model
     use HasFactory;
 
     protected $fillable = [
-        'ref', 'user_id', 'store_id', 'zone_id',
-        'status', 'payment_method', 'payment_status',
+        'ref', 'user_id', 'store_id', 'courier_id', 'zone_id',
+        'status', 'accepted_at', 'ready_at', 'picked_up_at', 'delivered_at',
+        'payment_method', 'payment_status',
         'subtotal_millimes', 'delivery_fee_millimes', 'total_millimes',
         'delivery_landmark', 'delivery_city', 'delivery_building',
         'delivery_floor', 'delivery_door', 'delivery_phone',
@@ -27,6 +28,10 @@ class Order extends Model
         'total_millimes'         => 'integer',
         'delivery_lat'           => 'float',
         'delivery_lng'           => 'float',
+        'accepted_at'            => 'datetime',
+        'ready_at'               => 'datetime',
+        'picked_up_at'           => 'datetime',
+        'delivered_at'           => 'datetime',
     ];
 
     // ── Labels statuts ────────────────────────────────────────────────────
@@ -55,6 +60,11 @@ class Order extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function courier(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'courier_id');
     }
 
     public function store(): BelongsTo

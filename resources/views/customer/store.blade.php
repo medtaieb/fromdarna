@@ -39,7 +39,7 @@
                     @endif
                 </div>
                 @if ($item->is_available && $store->is_open)
-                    <div class="qty" data-qty data-price="{{ $item->price_millimes }}">
+                    <div class="qty glow" data-qty data-price="{{ $item->price_millimes }}">
                         <button type="button" data-step="-" aria-label="Retirer {{ $item->name }}">−</button>
                         <output aria-live="polite">0</output>
                         <button type="button" data-step="+" aria-label="Ajouter {{ $item->name }}">+</button>
@@ -54,7 +54,7 @@
     @endforelse
 </x-card>
 
-<a class="cbar" href="{{ route('cart') }}">
+<a class="cbar glow grad-animate" href="{{ route('cart') }}">
     <span><span data-count>0</span> article(s)</span>
     <span>Voir le panier · <span data-total>0,000 TND</span></span>
 </a>

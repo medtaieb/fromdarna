@@ -7,7 +7,7 @@
     <x-slot name="actions">
         <form method="POST" action="{{ route('partner.store.toggle', $store) }}" style="display:inline">
             @csrf
-            <button class="sw" type="submit"
+            <button class="sw glow" type="submit"
                     aria-pressed="{{ $store->is_open ? 'true' : 'false' }}"
                     data-on="Prend des commandes" data-off="En pause">
                 <i></i><span class="lbl">{{ $store->is_open ? 'Prend des commandes' : 'En pause' }}</span>
@@ -44,7 +44,7 @@
                 </div>
                 <form method="POST" action="{{ route('partner.products.toggle', $item) }}">
                     @csrf
-                    <button class="sw" type="submit"
+                    <button class="sw glow" type="submit"
                             aria-pressed="{{ $item->is_available ? 'true' : 'false' }}"
                             data-on="Disponible" data-off="En rupture">
                         <i></i><span class="lbl">{{ $item->is_available ? 'Disponible' : 'En rupture' }}</span>

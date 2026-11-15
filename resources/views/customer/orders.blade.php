@@ -27,7 +27,7 @@
     <div style="text-align:center;padding:24px">
         <span style="font-size:36px">📦</span>
         <p class="mut" style="margin-top:8px">Vous n'avez pas encore passé de commande.</p>
-        <x-btn :href="route('feed')" style="margin-top:12px">Voir les restaurants</x-btn>
+        <x-btn :href="route('feed')" style="margin-top:12px" class="glow">Voir les restaurants</x-btn>
     </div>
 @endif
 </x-card>
