@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\HomeController;
 use Illuminate\Support\Facades\Route;
 
@@ -29,7 +30,12 @@ Route::view('/commande', 'customer.checkout')->name('checkout');
 Route::post('/commande', fn () => redirect()->route('orders.show', 1043))->name('orders.place');
 Route::view('/mes-commandes', 'customer.orders')->name('orders.index');
 Route::view('/mes-commandes/{id}', 'customer.order-show')->name('orders.show');
-Route::view('/compte', 'customer.account')->name('account');
+Route::get('/compte', [CustomerController::class, 'account'])->name('account');
+Route::post('/compte/profil', [CustomerController::class, 'updateProfile'])->name('account.profile');
+Route::post('/compte/adresses', [CustomerController::class, 'storeAddress'])->name('account.address.store');
+Route::put('/compte/adresses/{address}', [CustomerController::class, 'updateAddress'])->name('account.address.update');
+Route::delete('/compte/adresses/{address}', [CustomerController::class, 'deleteAddress'])->name('account.address.delete');
+Route::post('/compte/supprimer', [CustomerController::class, 'deleteAccount'])->name('account.delete');
 Route::view('/hors-zone', 'customer.out-of-zone')->name('out-of-zone');
 
 // ── Espace Partenaire (middleware: auth, role:partner_owner,partner_staff) ──

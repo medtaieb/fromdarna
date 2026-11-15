@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -17,6 +19,9 @@ class User extends Authenticatable
         'phone',
         'role',
         'status',
+        'language',
+        'notify_orders',
+        'notify_marketing',
         'password',
         'otp_code',
         'otp_expires_at',
@@ -32,7 +37,25 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'otp_expires_at' => 'datetime',
         'password' => 'hashed',
+        'notify_orders' => 'boolean',
+        'notify_marketing' => 'boolean',
     ];
+
+    /**
+     * Adresses enregistrées du client
+     */
+    public function addresses(): HasMany
+    {
+        return $this->hasMany(Address::class);
+    }
+
+    /**
+     * Adresse de livraison par défaut
+     */
+    public function defaultAddress(): HasOne
+    {
+        return $this->hasOne(Address::class)->where('is_default', true)->latestOfMany();
+    }
 
     public function hasRole(...$roles): bool
     {
