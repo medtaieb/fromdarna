@@ -3,9 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Services\Sms\SmsManager;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 
 class AuthController extends Controller
@@ -22,26 +23,46 @@ class AuthController extends Controller
     }
 
     /**
-     * Envoi du code SMS OTP
+     * Envoi du code SMS OTP réel via la passerelle SMS
      */
-    public function sendOtp(Request $request)
+    public function sendOtp(Request $request, SmsManager $sms)
     {
         $request->validate([
-            'phone' => 'required|string|min:8',
+            'phone' => ['required', 'string', 'min:8', 'max:20'],
         ], [
             'phone.required' => 'Veuillez saisir votre numéro de téléphone.',
             'phone.min' => 'Le numéro de téléphone doit comporter au moins 8 chiffres.',
         ]);
 
-        $rawPhone = preg_replace('/\s+/', '', $request->input('phone'));
-        // Normaliser au format international +216
-        if (!Str::startsWith($rawPhone, '+216')) {
-            $rawPhone = '+216' . ltrim($rawPhone, '0+');
+        // Nettoyage et normalisation du numéro au format international tunisien (+216XXXXXXXX)
+        $cleanDigits = preg_replace('/\D/', '', $request->input('phone'));
+
+        if (Str::startsWith($cleanDigits, '216')) {
+            $rawPhone = '+' . $cleanDigits;
+        } else {
+            $rawPhone = '+216' . $cleanDigits;
         }
 
-        // Code OTP fixe pour l'environnement de démo/test : 123456
-        $otp = '123456';
+        // Vérification de validité minimale pour un numéro tunisien (8 chiffres après +216)
+        if (strlen($rawPhone) !== 12) {
+            return back()->withErrors([
+                'phone' => 'Numéro de téléphone invalide. Veuillez entrer un numéro tunisien à 8 chiffres (ex: 20 123 456).'
+            ])->withInput();
+        }
 
+        // Protection anti SMS-pumping (limite par heure)
+        if ($sms->isTooManyAttempts($rawPhone)) {
+            return back()->withErrors([
+                'phone' => 'Trop de codes demandés pour ce numéro. Veuillez patienter avant de faire une nouvelle demande.'
+            ])->withInput();
+        }
+
+        // Génération du code OTP :
+        // Pour le numéro de test démo (+21620123456), on garde 123456 pour les tests automatisés
+        $isDemoNumber = ($rawPhone === '+21620123456');
+        $otp = $isDemoNumber ? '123456' : $sms->generateOtp();
+
+        // Enregistrement / mise à jour de l'utilisateur
         $user = User::firstOrCreate(
             ['phone' => $rawPhone],
             [
@@ -51,17 +72,33 @@ class AuthController extends Controller
             ]
         );
 
+        $ttlMinutes = config('sms.otp.ttl_minutes', 10);
+
         $user->update([
             'otp_code' => $otp,
-            'otp_expires_at' => now()->addMinutes(10),
+            'otp_expires_at' => now()->addMinutes($ttlMinutes),
         ]);
 
+        // Envoi réel du SMS
+        $sent = $sms->sendOtp($rawPhone, $otp);
+        $sms->recordAttempt($rawPhone);
+
+        // Mémorisation du numéro et réinitialisation des tentatives de saisie
         session([
             'auth_phone' => $rawPhone,
-            'demo_otp' => $otp, // Affiché en aide pour faciliter les tests
+            'otp_verify_attempts' => 0,
         ]);
 
-        return redirect()->route('otp.verify')->with('info', "Code envoyé au {$rawPhone} (Code de test : {$otp})");
+        // En environnement local ou avec le driver "log", on aide le développeur avec un message informatif
+        $isLogDriver = config('sms.default') === 'log';
+        if ($isLogDriver || $isDemoNumber) {
+            session(['demo_otp' => $otp]);
+            $notice = "Code SMS envoyé au {$rawPhone} (Mode test : {$otp})";
+        } else {
+            $notice = "Un code de vérification vous a été envoyé par SMS au {$rawPhone}.";
+        }
+
+        return redirect()->route('otp.verify')->with('info', $notice);
     }
 
     /**
@@ -79,10 +116,10 @@ class AuthController extends Controller
     /**
      * Vérification du code OTP et connexion du client
      */
-    public function checkOtp(Request $request)
+    public function checkOtp(Request $request, SmsManager $sms)
     {
         $otpArray = $request->input('otp', []);
-        $code = is_array($otpArray) ? implode('', $otpArray) : (string) $otpArray;
+        $code = is_array($otpArray) ? implode('', $otpArray) : trim((string) $otpArray);
 
         $phone = session('auth_phone');
         if (!$phone) {
@@ -91,20 +128,47 @@ class AuthController extends Controller
 
         $user = User::where('phone', $phone)->first();
 
-        if (!$user || $user->otp_code !== $code) {
-            return back()->withErrors(['otp' => 'Le code saisi est incorrect. (Code de test : 123456)']);
+        if (!$user) {
+            return redirect()->route('login')->with('error', 'Utilisateur introuvable.');
         }
 
-        // Réinitialiser le code OTP
+        // Vérification de la validité temporelle
+        if (!$user->otp_expires_at || now()->isAfter($user->otp_expires_at)) {
+            return back()->withErrors([
+                'otp' => 'Le code de vérification a expiré. Veuillez demander un nouveau code.'
+            ]);
+        }
+
+        // Compteur d'essais (max 5)
+        $attempts = (int) session('otp_verify_attempts', 0) + 1;
+        session(['otp_verify_attempts' => $attempts]);
+        $maxAttempts = config('sms.otp.max_attempts', 5);
+
+        if ($attempts > $maxAttempts) {
+            // Invalider le code après trop d'échecs
+            $user->update(['otp_code' => null, 'otp_expires_at' => null]);
+            session()->forget(['auth_phone', 'demo_otp', 'otp_verify_attempts']);
+            return redirect()->route('login')->with('error', 'Nombre maximal de tentatives dépassé. Veuillez demander un nouveau code.');
+        }
+
+        // Vérification de l'exactitude du code
+        if ($user->otp_code !== $code) {
+            $remaining = $maxAttempts - $attempts;
+            $msg = "Code incorrect. " . ($remaining > 0 ? "Il vous reste {$remaining} tentative(s)." : "Code invalidé.");
+            return back()->withErrors(['otp' => $msg]);
+        }
+
+        // Succès : Nettoyage du code et connexion
         $user->update([
             'otp_code' => null,
             'otp_expires_at' => null,
         ]);
 
+        $sms->clearRateLimit($phone);
         Auth::login($user, true);
-        session()->forget(['auth_phone', 'demo_otp']);
+        session()->forget(['auth_phone', 'demo_otp', 'otp_verify_attempts']);
 
-        return redirect()->route('feed')->with('success', 'Bienvenue sur FromDarna !');
+        return redirect()->route('feed')->with('success', 'Connexion réussie ! Bienvenue sur FromDarna.');
     }
 
     /**
@@ -216,4 +280,3 @@ class AuthController extends Controller
         return redirect()->route('feed');
     }
 }
-

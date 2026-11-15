@@ -43,10 +43,12 @@
         </div>
     </div>
 
-    {{-- Raccourci Démo --}}
-    <button type="button" id="fillDemoOtp" style="background:none;border:1px dashed var(--olive);padding:8px 12px;border-radius:10px;color:var(--olive);font-size:13px;cursor:pointer;text-align:left;line-height:1.4">
-        ⚡ <strong>Environnement de test :</strong> cliquer ici pour insérer le code <code>123456</code>
+    {{-- Raccourci Démo si présent --}}
+    @if(session('demo_otp'))
+    <button type="button" id="fillDemoOtp" data-code="{{ session('demo_otp') }}" style="background:none;border:1px dashed var(--olive);padding:8px 12px;border-radius:10px;color:var(--olive);font-size:13px;cursor:pointer;text-align:left;line-height:1.4">
+        ⚡ <strong>Code de test :</strong> cliquer pour insérer le code <code>{{ session('demo_otp') }}</code>
     </button>
+    @endif
 
     <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--mut)">
         <span>Valable encore : <b id="otpCountdown" style="color:var(--rust)">09:59</b></span>
@@ -77,7 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const fillBtn = document.getElementById('fillDemoOtp');
     if (fillBtn) {
         fillBtn.addEventListener('click', () => {
-            const demoCode = '123456';
+            const demoCode = fillBtn.dataset.code || '123456';
             inputs.forEach((input, idx) => {
                 input.value = demoCode[idx] || '';
             });
