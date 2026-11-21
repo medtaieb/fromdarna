@@ -47,15 +47,19 @@ Route::delete('/compte/adresses/{address}', [CustomerController::class, 'deleteA
 Route::post('/compte/supprimer', [CustomerController::class, 'deleteAccount'])->name('account.delete');
 Route::view('/hors-zone', 'customer.out-of-zone')->name('out-of-zone');
 
-// ── Espace Partenaire (middleware: auth, role:partner_owner,partner_staff) ──
-Route::prefix('partenaire')->middleware(['auth', 'role:partner_owner,partner_staff'])->group(function () {
+// ── Espace Partenaire (Console Restaurant) ──────────────────────────────────
+Route::prefix('partenaire')->group(function () {
     Route::get('/', [PartnerController::class, 'dashboard'])->name('partner.dashboard');
-    Route::view('/commandes', 'partner.orders')->name('partner.orders');
-    Route::view('/commandes/{id}', 'partner.order-show')->name('partner.orders.show');
+    Route::get('/commandes', [PartnerController::class, 'orders'])->name('partner.orders');
+    Route::get('/commandes/{id}', [PartnerController::class, 'orderShow'])->name('partner.orders.show');
+    Route::post('/commandes/{order}/accept', [PartnerController::class, 'acceptOrder'])->name('partner.orders.accept');
+    Route::post('/commandes/{order}/ready', [PartnerController::class, 'readyOrder'])->name('partner.orders.ready');
+    Route::post('/commandes/{order}/reject', [PartnerController::class, 'rejectOrder'])->name('partner.orders.reject');
+    Route::get('/releves', [PartnerController::class, 'statements'])->name('partner.statements');
+    Route::get('/api/live-orders', [PartnerController::class, 'liveOrders'])->name('partner.api.live');
     Route::get('/menu', [PartnerController::class, 'products'])->name('partner.products');
     Route::post('/produits/{product}/toggle', [PartnerController::class, 'toggleProduct'])->name('partner.products.toggle');
     Route::post('/magasin/{store}/toggle', [PartnerController::class, 'toggleStoreStatus'])->name('partner.store.toggle');
-    Route::view('/releves', 'partner.statements')->name('partner.statements');
 });
 
 // ── Espace Livreur (middleware: auth, role:courier) ──────────────

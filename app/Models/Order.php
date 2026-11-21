@@ -19,7 +19,7 @@ class Order extends Model
         'delivery_landmark', 'delivery_city', 'delivery_building',
         'delivery_floor', 'delivery_door', 'delivery_phone',
         'delivery_lat', 'delivery_lng', 'delivery_code',
-        'customer_note', 'idempotency_key',
+        'customer_note', 'rejection_reason', 'idempotency_key',
     ];
 
     protected $casts = [

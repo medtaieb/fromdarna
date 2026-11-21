@@ -1,24 +1,78 @@
 @extends('layouts.portal')
 @section('role', 'partner')
-@section('title', 'Relevés et versements')
-
-@php
-    // [semaine, commandes, ventes en millimes, statut]
-    $weeks = [['Semaine 43', 41, 1012000, 'o:En cours'], ['Semaine 42', 38, 962000, 'g:Versé'], ['Semaine 41', 33, 810500, 'g:Versé']];
-    $rows = array_map(function ($w) {
-        $commission = intdiv($w[2] * 12, 100);
-        $m = fn ($x) => \App\Support\Money::tnd($x);
-        return [$w[0], (string) $w[1], $m($w[2]), '− ' . $m($commission), $m($w[2] - $commission), $w[3]];
-    }, $weeks);
-@endphp
+@section('title', 'Relevés & Versements · ' . $store->name)
 
 @section('content')
-<x-title title="Relevés et versements" sub="Versement chaque semaine par virement, commission déduite.">
-    <x-slot name="actions"><x-btn variant="ghost" size="sm">Exporter</x-btn></x-slot>
+<x-title :title="'Relevés & Versements · ' . $store->name" sub="Suivi transparent de vos ventes, déduction de commission et paiements par virement.">
+    <x-slot name="actions">
+        <button class="btn ghost sm" type="button" onclick="window.print()">🖨️ Imprimer le relevé</button>
+    </x-slot>
 </x-title>
 
+{{-- ── Résumé global ── --}}
+<div class="grid g3" style="margin-bottom:16px">
+    <x-card class="glow">
+        <div class="mut" style="font-size:13px">Total des ventes (hors livraison)</div>
+        <div style="font-size:26px;font-weight:800;color:var(--olive);margin-top:4px">
+            @tnd($totalSales)
+        </div>
+        <div class="mut" style="font-size:11.5px;margin-top:2px">Commandes livrées cumulées</div>
+    </x-card>
+
+    <x-card>
+        <div class="mut" style="font-size:13px">Commission FromDarna ({{ ($store->commission_bps ?? 1200) / 100 }} %)</div>
+        <div style="font-size:24px;font-weight:800;color:var(--tomate);margin-top:4px">
+            − @tnd($totalCommission)
+        </div>
+        <div class="mut" style="font-size:11.5px;margin-top:2px">Plateforme, mise en relation, marketing</div>
+    </x-card>
+
+    <x-card class="glow-brand">
+        <div class="mut" style="font-size:13px">Net total dû au restaurant</div>
+        <div style="font-size:26px;font-weight:800;color:#2E7D32;margin-top:4px">
+            @tnd($totalNet)
+        </div>
+        <div class="mut" style="font-size:11.5px;margin-top:2px">Versé chaque semaine par virement bancaire</div>
+    </x-card>
+</div>
+
 <x-card>
-    <x-table :headers="['Période', 'Commandes', 'Ventes', 'Commission (12 %)', 'Net à verser', 'Statut']" :rows="$rows" />
-    <p class="mut">Le taux de commission est celui de votre contrat. Chaque ligne se rapproche du grand livre.</p>
+    <h2>Historique des périodes de versement</h2>
+
+    @if($weeks->count())
+        <table style="width:100%;border-collapse:collapse;font-size:13.5px;margin-top:10px">
+            <thead>
+                <tr style="border-bottom:1.5px solid var(--line);text-align:left">
+                    <th style="padding:10px 8px">Période</th>
+                    <th style="padding:10px 8px">Commandes</th>
+                    <th style="padding:10px 8px">Ventes brutes</th>
+                    <th style="padding:10px 8px">Commission FromDarna</th>
+                    <th style="padding:10px 8px">Net à verser</th>
+                    <th style="padding:10px 8px">Statut</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($weeks as $w)
+                    <tr style="border-bottom:1px solid var(--line)">
+                        <td style="padding:12px 8px"><strong>{{ $w['period'] }}</strong></td>
+                        <td style="padding:12px 8px">{{ $w['count'] }} commande(s)</td>
+                        <td style="padding:12px 8px">@tnd($w['sales'])</td>
+                        <td style="padding:12px 8px;color:var(--tomate)">− @tnd($w['commission'])</td>
+                        <td style="padding:12px 8px;font-weight:700;color:#2E7D32">@tnd($w['net'])</td>
+                        <td style="padding:12px 8px"><span class="bd o">En cours</span></td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    @else
+        <div style="text-align:center;padding:32px">
+            <span style="font-size:36px">📊</span>
+            <p class="mut" style="margin-top:8px">Vos premiers relevés apparaîtront ici dès que vos commandes seront livrées.</p>
+        </div>
+    @endif
+
+    <p class="mut" style="margin-top:16px;font-size:12.5px">
+        ℹ️ Le virement bancaire est exécuté chaque mardi sur le compte IBAN de votre établissement pour les commandes clôturées de la semaine précédente.
+    </p>
 </x-card>
 @endsection

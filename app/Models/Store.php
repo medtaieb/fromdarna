@@ -60,6 +60,11 @@ class Store extends Model
         return $this->hasManyThrough(Product::class, Category::class);
     }
 
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class);
+    }
+
     // Accessors de compatibilité avec les composants existants (store-card, etc.)
     public function getOpenAttribute(): bool
     {

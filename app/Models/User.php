@@ -62,6 +62,11 @@ class User extends Authenticatable
         return $this->hasOne(CourierLocation::class);
     }
 
+    public function store(): HasOne
+    {
+        return $this->hasOne(Store::class);
+    }
+
     public function assignedOrders(): HasMany
     {
         return $this->hasMany(Order::class, 'courier_id');
