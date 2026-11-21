@@ -88,9 +88,20 @@ Route::prefix('ops')->group(function () {
     Route::get('/dispatch/live-data', [OpsController::class, 'liveData'])->name('ops.dispatch.live');
 
     Route::get('/restaurants', [OpsController::class, 'restaurants'])->name('ops.stores');
+    Route::get('/restaurants/creer', [OpsController::class, 'storeCreate'])->name('ops.stores.create');
+    Route::post('/restaurants', [OpsController::class, 'storeStore'])->name('ops.stores.store');
     Route::get('/restaurants/{id}', [OpsController::class, 'storeEdit'])->name('ops.stores.edit');
     Route::post('/restaurants/{id}', [OpsController::class, 'storeUpdate'])->name('ops.stores.update');
     Route::post('/restaurants/{id}/toggle', [OpsController::class, 'storeToggleStatus'])->name('ops.stores.toggle');
+    Route::delete('/restaurants/{id}', [OpsController::class, 'storeDestroy'])->name('ops.stores.destroy');
+
+    // Menu : Catégories et Produits
+    Route::post('/restaurants/{id}/categories', [OpsController::class, 'categoryStore'])->name('ops.categories.store');
+    Route::delete('/categories/{category}', [OpsController::class, 'categoryDestroy'])->name('ops.categories.destroy');
+    Route::post('/restaurants/{id}/produits', [OpsController::class, 'productStore'])->name('ops.products.store');
+    Route::post('/produits/{product}', [OpsController::class, 'productUpdate'])->name('ops.products.update');
+    Route::post('/produits/{product}/toggle', [OpsController::class, 'productToggle'])->name('ops.products.toggle');
+    Route::delete('/produits/{product}', [OpsController::class, 'productDestroy'])->name('ops.products.destroy');
 
     Route::get('/zones', [OpsController::class, 'zones'])->name('ops.zones');
     Route::post('/zones/{zone}/toggle', [OpsController::class, 'zoneToggleStatus'])->name('ops.zones.toggle');

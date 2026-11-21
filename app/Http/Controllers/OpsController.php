@@ -2,16 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Category;
 use App\Models\CourierCashDrop;
 use App\Models\CourierLocation;
 use App\Models\Order;
 use App\Models\OrderIncident;
+use App\Models\Product;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\Zone;
 use App\Support\Demo;
 use App\Support\Money;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class OpsController extends Controller
 {
@@ -432,7 +435,69 @@ class OpsController extends Controller
     }
 
     /**
-     * Édition d'un restaurant (commission, prep, statut, horaires)
+     * Formulaire d'ajout d'un nouveau restaurant
+     */
+    public function storeCreate()
+    {
+        $zones = Zone::all();
+        return view('ops.store-create', compact('zones'));
+    }
+
+    /**
+     * Enregistrer un nouveau restaurant
+     */
+    public function storeStore(Request $request)
+    {
+        $validated = $request->validate([
+            'name'               => 'required|string|max:100',
+            'zone_id'            => 'required|exists:zones,id',
+            'kind'               => 'required|string|max:100',
+            'emoji'              => 'nullable|string|max:10',
+            'commission_bps'     => 'required|integer|min:0|max:5000',
+            'avg_prep_minutes'   => 'required|integer|min:5|max:120',
+            'min_order_millimes' => 'nullable|integer|min:0',
+            'phone'              => 'nullable|string|max:20',
+            'address'            => 'nullable|string|max:255',
+            'latitude'           => 'nullable|numeric',
+            'longitude'          => 'nullable|numeric',
+            'is_open'            => 'nullable|boolean',
+        ]);
+
+        $baseSlug = Str::slug($validated['name']);
+        $slug = $baseSlug;
+        $i = 1;
+        while (Store::where('slug', $slug)->exists()) {
+            $slug = $baseSlug . '-' . $i++;
+        }
+
+        $store = Store::create([
+            'name'               => $validated['name'],
+            'slug'               => $slug,
+            'zone_id'            => $validated['zone_id'],
+            'kind'               => $validated['kind'],
+            'emoji'              => $validated['emoji'] ?? '🍽️',
+            'commission_bps'     => $validated['commission_bps'],
+            'avg_prep_minutes'   => $validated['avg_prep_minutes'],
+            'min_order_millimes' => $validated['min_order_millimes'] ?? 10000,
+            'phone'              => $validated['phone'] ?? '+216 72 000 000',
+            'address'            => $validated['address'] ?? 'Centre-ville',
+            'latitude'           => $validated['latitude'] ?? 36.6175,
+            'longitude'          => $validated['longitude'] ?? 10.4990,
+            'is_open'            => $request->boolean('is_open'),
+        ]);
+
+        // Créer une première catégorie par défaut
+        Category::create([
+            'store_id'   => $store->id,
+            'name'       => 'Plats Principaux',
+            'sort_order' => 1,
+        ]);
+
+        return redirect()->route('ops.stores.edit', $store->id)->with('success', "Restaurant « {$store->name} » créé avec succès. Vous pouvez maintenant enrichir son menu !");
+    }
+
+    /**
+     * Édition d'un restaurant (commission, prep, statut, horaires, catégories et produits)
      */
     public function storeEdit($id)
     {
@@ -450,20 +515,28 @@ class OpsController extends Controller
 
         $validated = $request->validate([
             'name'             => 'required|string|max:100',
+            'kind'             => 'nullable|string|max:100',
+            'emoji'            => 'nullable|string|max:10',
             'commission_bps'   => 'required|integer|min:0|max:5000',
             'avg_prep_minutes' => 'required|integer|min:5|max:120',
             'phone'            => 'nullable|string|max:20',
             'address'          => 'nullable|string|max:255',
+            'latitude'         => 'nullable|numeric',
+            'longitude'        => 'nullable|numeric',
             'zone_id'          => 'required|exists:zones,id',
             'is_open'          => 'nullable|boolean',
         ]);
 
         $store->update([
             'name'             => $validated['name'],
+            'kind'             => $validated['kind'] ?? $store->kind,
+            'emoji'            => $validated['emoji'] ?? $store->emoji,
             'commission_bps'   => $validated['commission_bps'],
             'avg_prep_minutes' => $validated['avg_prep_minutes'],
             'phone'            => $validated['phone'],
             'address'          => $validated['address'],
+            'latitude'         => $validated['latitude'] ?? $store->latitude,
+            'longitude'        => $validated['longitude'] ?? $store->longitude,
             'zone_id'          => $validated['zone_id'],
             'is_open'          => $request->boolean('is_open'),
         ]);
@@ -478,8 +551,138 @@ class OpsController extends Controller
     {
         $store = Store::findOrFail($id);
         $store->update(['is_open' => ! $store->is_open]);
-        $status = $store->is_open ? 'ouvert' : 'fermé';
+        $status = $store->is_open ? 'activé (ouvert)' : 'désactivé (fermé)';
         return back()->with('success', "Le restaurant {$store->name} est maintenant {$status}.");
+    }
+
+    /**
+     * Supprimer un restaurant
+     */
+    public function storeDestroy($id)
+    {
+        $store = Store::findOrFail($id);
+        $name = $store->name;
+        
+        // Supprimer catégories et produits associés
+        foreach ($store->categories as $category) {
+            $category->products()->delete();
+            $category->delete();
+        }
+        $store->delete();
+
+        return redirect()->route('ops.stores')->with('success', "Le restaurant « {$name} » et son menu ont été supprimés.");
+    }
+
+    /**
+     * Ajouter une catégorie au menu du restaurant
+     */
+    public function categoryStore(Request $request, $id)
+    {
+        $store = Store::findOrFail($id);
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:80',
+        ]);
+
+        $order = Category::where('store_id', $store->id)->count() + 1;
+
+        Category::create([
+            'store_id'   => $store->id,
+            'name'       => $validated['name'],
+            'sort_order' => $order,
+        ]);
+
+        return back()->with('success', "Catégorie « {$validated['name']} » ajoutée au menu.");
+    }
+
+    /**
+     * Supprimer une catégorie et ses produits
+     */
+    public function categoryDestroy(Category $category)
+    {
+        $name = $category->name;
+        $category->products()->delete();
+        $category->delete();
+
+        return back()->with('success', "Catégorie « {$name} » et ses produits ont été supprimés.");
+    }
+
+    /**
+     * Ajouter un produit/plat au menu du restaurant
+     */
+    public function productStore(Request $request, $id)
+    {
+        $store = Store::findOrFail($id);
+
+        $validated = $request->validate([
+            'category_id'  => 'required|exists:categories,id',
+            'name'         => 'required|string|max:100',
+            'description'  => 'nullable|string|max:255',
+            'price_tnd'    => 'required|numeric|min:0.1',
+            'is_available' => 'nullable|boolean',
+        ]);
+
+        $priceMillimes = (int) round($validated['price_tnd'] * 1000);
+        $sort = Product::where('category_id', $validated['category_id'])->count() + 1;
+
+        Product::create([
+            'category_id'    => $validated['category_id'],
+            'name'           => $validated['name'],
+            'description'    => $validated['description'] ?? null,
+            'price_millimes' => $priceMillimes,
+            'is_available'   => $request->boolean('is_available', true),
+            'sort_order'     => $sort,
+        ]);
+
+        return back()->with('success', "Plat « {$validated['name']} » ajouté avec succès au menu (" . number_format($validated['price_tnd'], 3, ',', ' ') . " TND).");
+    }
+
+    /**
+     * Modifier un plat du menu
+     */
+    public function productUpdate(Request $request, Product $product)
+    {
+        $validated = $request->validate([
+            'name'         => 'required|string|max:100',
+            'category_id'  => 'required|exists:categories,id',
+            'description'  => 'nullable|string|max:255',
+            'price_tnd'    => 'required|numeric|min:0.1',
+            'is_available' => 'nullable|boolean',
+        ]);
+
+        $priceMillimes = (int) round($validated['price_tnd'] * 1000);
+
+        $product->update([
+            'name'           => $validated['name'],
+            'category_id'    => $validated['category_id'],
+            'description'    => $validated['description'] ?? null,
+            'price_millimes' => $priceMillimes,
+            'is_available'   => $request->boolean('is_available'),
+        ]);
+
+        return back()->with('success', "Plat « {$product->name} » mis à jour avec succès.");
+    }
+
+    /**
+     * Basculer la disponibilité d'un plat (En stock / En rupture)
+     */
+    public function productToggle(Product $product)
+    {
+        $product->update(['is_available' => ! $product->is_available]);
+        $status = $product->is_available ? 'disponible en commande' : 'marqué en rupture de stock';
+        return back()->with('success', "Le plat « {$product->name} » est maintenant {$status}.");
+    }
+
+    /**
+     * Supprimer un plat du menu
+     */
+    public function productDestroy(Product $product)
+    {
+        $name = $product->name;
+        $product->options()->delete();
+        $product->delete();
+
+        return back()->with('success', "Le plat « {$name} » a été retiré du menu.");
     }
 
     /**
