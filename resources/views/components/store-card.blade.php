@@ -6,7 +6,7 @@
         <span class="mut">{{ $store['kind'] }}</span>
         <div class="row">
             @if ($store['open'])<x-badge type="g" class="pulse">Ouvert</x-badge>@else<x-badge type="x">Fermé</x-badge>@endif
-            <span class="mut">≈ {{ $store['eta'] }} min · min. @tnd($store['min'])</span>
+            <span class="mut">≈ {{ $store['eta'] }} min · min. {{ \App\Support\Money::tnd($store['min']) }}</span>
         </div>
     </div>
 </a>

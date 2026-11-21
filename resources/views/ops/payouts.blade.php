@@ -31,13 +31,13 @@
                     <b>{{ $p['count'] }} commande(s)</b>
                 </td>
                 <td>
-                    <strong>@tnd($p['sales'])</strong>
+                    <strong>{{ \App\Support\Money::tnd($p['sales']) }}</strong>
                 </td>
                 <td style="color:#C41317;">
-                    − @tnd($p['commission'])
+                    − {{ \App\Support\Money::tnd($p['commission']) }}
                 </td>
                 <td>
-                    <strong style="color:var(--olive);font-size:1.05rem;">@tnd($p['net'])</strong>
+                    <strong style="color:var(--olive);font-size:1.05rem;">{{ \App\Support\Money::tnd($p['net']) }}</strong>
                 </td>
                 <td>
                     <x-badge :type="$p['net'] > 0 ? 'o' : 'g'">
@@ -69,7 +69,7 @@
                         <div class="mut" style="font-size:0.8rem;">📞 {{ $drop->courier?->phone }}</div>
                     </td>
                     <td>
-                        <strong style="color:var(--olive);">@tnd($drop->amount_millimes)</strong>
+                        <strong style="color:var(--olive);">{{ \App\Support\Money::tnd($drop->amount_millimes) }}</strong>
                     </td>
                     <td class="mut">{{ $drop->created_at->format('d/m/Y H:i') }}</td>
                     <td class="mut">{{ $drop->notes ?? '—' }}</td>

@@ -79,11 +79,11 @@
             @foreach($order->items as $item)
                 <div class="sum">
                     <span>{{ $item->quantity }} × {{ $item->product_name }}</span>
-                    <span>@tnd($item->line_total_millimes)</span>
+                    <span>{{ \App\Support\Money::tnd($item->line_total_millimes) }}</span>
                 </div>
             @endforeach
-            <div class="sum"><span>Livraison ({{ $order->zone->name }})</span><span>@tnd($order->delivery_fee_millimes)</span></div>
-            <div class="sum t"><span>Total payé en cash</span><span>@tnd($order->total_millimes)</span></div>
+            <div class="sum"><span>Livraison ({{ $order->zone->name }})</span><span>{{ \App\Support\Money::tnd($order->delivery_fee_millimes) }}</span></div>
+            <div class="sum t"><span>Total payé en cash</span><span>{{ \App\Support\Money::tnd($order->total_millimes) }}</span></div>
 
             @if($order->delivery_landmark)
             <p class="mut" style="margin-top:8px;font-size:13px">

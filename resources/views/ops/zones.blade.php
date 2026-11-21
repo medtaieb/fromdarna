@@ -27,7 +27,7 @@
                     {{ $zone->ar_name }}
                 </td>
                 <td>
-                    <strong style="color:var(--olive);font-size:1.05rem;">@tnd($zone->delivery_fee_millimes)</strong>
+                    <strong style="color:var(--olive);font-size:1.05rem;">{{ \App\Support\Money::tnd($zone->delivery_fee_millimes) }}</strong>
                 </td>
                 <td>
                     ⏱️ ≈ {{ $zone->estimated_delivery_minutes }} min

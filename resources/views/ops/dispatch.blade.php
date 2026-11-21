@@ -120,7 +120,7 @@
                         <tr style="border-bottom:1px solid var(--line)">
                             <td style="padding:10px 4px">
                                 <strong>#{{ $ord->ref }}</strong>
-                                <div class="mut" style="font-size:11px">@tnd($ord->total_millimes)</div>
+                                <div class="mut" style="font-size:11px">{{ \App\Support\Money::tnd($ord->total_millimes) }}</div>
                             </td>
                             <td style="padding:10px 4px">
                                 <div>🍽️ {{ $ord->store->name }}</div>
@@ -149,7 +149,7 @@
                         <tr style="border-bottom:1px solid var(--line);background:rgba(196,19,23,0.03)">
                             <td style="padding:10px 4px">
                                 <strong style="color:var(--tomate)">#{{ $ord->ref }}</strong>
-                                <div class="mut" style="font-size:11px">@tnd($ord->total_millimes)</div>
+                                <div class="mut" style="font-size:11px">{{ \App\Support\Money::tnd($ord->total_millimes) }}</div>
                             </td>
                             <td style="padding:10px 4px">
                                 <div>🍽️ {{ $ord->store->name }}</div>

@@ -26,14 +26,14 @@
                                 <div class="mut" style="font-size:12px">{{ $it->product->description }}</div>
                             @endif
                         </div>
-                        <strong style="font-size:15px">@tnd($it->line_total_millimes)</strong>
+                        <strong style="font-size:15px">{{ \App\Support\Money::tnd($it->line_total_millimes) }}</strong>
                     </div>
                 @endforeach
             </div>
 
             <div class="sum t" style="margin-top:10px">
                 <span>Total plats restaurant</span>
-                <span>@tnd($order->subtotal_millimes)</span>
+                <span>{{ \App\Support\Money::tnd($order->subtotal_millimes) }}</span>
             </div>
 
             @if($order->customer_note)

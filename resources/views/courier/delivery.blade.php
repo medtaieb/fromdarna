@@ -112,7 +112,7 @@
                         @csrf
                         <input type="hidden" name="status" value="DELIVERED">
                         <x-field label="Code de livraison donné par le client *" name="otp" placeholder="4 chiffres (ex: {{ $order->delivery_code }})" inputmode="numeric" required />
-                        <div class="sum t"><span>Cash à encaisser</span><span>@tnd($order->total_millimes)</span></div>
+                        <div class="sum t"><span>Cash à encaisser</span><span>{{ \App\Support\Money::tnd($order->total_millimes) }}</span></div>
                         <button class="btn block glow grad-animate" type="submit">
                             ✅ Valider le code et terminer la livraison
                         </button>

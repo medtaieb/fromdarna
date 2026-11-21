@@ -88,7 +88,7 @@
                         <div class="mut" style="font-size:0.8rem;">📍 {{ $order->delivery_landmark ?? 'Centre' }}</div>
                     </td>
                     <td>
-                        <strong style="color:var(--olive);">@tnd($order->total_millimes)</strong>
+                        <strong style="color:var(--olive);">{{ \App\Support\Money::tnd($order->total_millimes) }}</strong>
                         <div class="mut" style="font-size:0.75rem;">{{ strtoupper($order->payment_method) }}</div>
                     </td>
                     <td>

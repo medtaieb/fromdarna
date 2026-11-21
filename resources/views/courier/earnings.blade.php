@@ -11,15 +11,15 @@
     <x-card class="glow">
         <div class="mut" style="font-size:13px">Cash détenu en main</div>
         <div style="font-size:26px;font-weight:800;color:{{ $isLimitExceeded ? 'var(--tomate)' : 'var(--rust)' }};margin-top:4px">
-            @tnd($heldCash)
+            {{ \App\Support\Money::tnd($heldCash) }}
         </div>
-        <div class="mut" style="font-size:11.5px;margin-top:2px">Plafond : @tnd($cashLimit)</div>
+        <div class="mut" style="font-size:11.5px;margin-top:2px">Plafond : {{ \App\Support\Money::tnd($cashLimit) }}</div>
     </x-card>
 
     <x-card class="glow">
         <div class="mut" style="font-size:13px">Gains du jour</div>
         <div style="font-size:26px;font-weight:800;color:var(--olive);margin-top:4px">
-            @tnd($todayEarnings)
+            {{ \App\Support\Money::tnd($todayEarnings) }}
         </div>
         <div class="mut" style="font-size:11.5px;margin-top:2px">{{ $todayDeliveries->count() }} course(s) aujourd'hui</div>
     </x-card>
@@ -27,7 +27,7 @@
     <x-card>
         <div class="mut" style="font-size:13px">Gains de la semaine</div>
         <div style="font-size:24px;font-weight:800;color:#2E7D32;margin-top:4px">
-            @tnd($weekEarnings)
+            {{ \App\Support\Money::tnd($weekEarnings) }}
         </div>
         <div class="mut" style="font-size:11.5px;margin-top:2px">Semaine en cours</div>
     </x-card>
@@ -70,7 +70,7 @@
                             <div class="mut" style="font-size:11.5px">{{ $ord->delivery_landmark ?? $ord->delivery_city }}</div>
                         </td>
                         <td style="padding:12px 8px">
-                            <span class="bd o">@tnd($ord->total_millimes)</span>
+                            <span class="bd o">{{ \App\Support\Money::tnd($ord->total_millimes) }}</span>
                         </td>
                         <td style="padding:12px 8px;font-weight:700;color:var(--olive)">
                             + 2,500 TND
@@ -109,7 +109,7 @@
                 @foreach($cashDrops as $cd)
                     <tr style="border-bottom:1px solid var(--line)">
                         <td style="padding:10px 8px"><strong>#{{ $cd->reference }}</strong></td>
-                        <td style="padding:10px 8px;font-weight:700;color:#2E7D32">@tnd($cd->amount_millimes)</td>
+                        <td style="padding:10px 8px;font-weight:700;color:#2E7D32">{{ \App\Support\Money::tnd($cd->amount_millimes) }}</td>
                         <td style="padding:10px 8px">
                             <span class="bd g">Validée au QG</span>
                         </td>

@@ -14,7 +14,7 @@
             <div style="display:flex;justify-content:space-between;align-items:center">
                 <span>Cash détenu en main :</span>
                 <strong style="font-size:26px;color:{{ $heldCash >= $cashLimit ? 'var(--tomate)' : 'var(--rust)' }}">
-                    @tnd($heldCash)
+                    {{ \App\Support\Money::tnd($heldCash) }}
                 </strong>
             </div>
 
@@ -24,7 +24,7 @@
 
             <div style="display:flex;justify-content:space-between;font-size:12px" class="mut">
                 <span>Niveau : {{ $cashPercent }} %</span>
-                <span>Plafond : @tnd($cashLimit)</span>
+                <span>Plafond : {{ \App\Support\Money::tnd($cashLimit) }}</span>
             </div>
         </div>
 
@@ -32,7 +32,7 @@
             <form method="POST" action="{{ route('courier.cash.drop') }}" class="stack">
                 @csrf
                 <p class="mut" style="font-size:13px">
-                    En cliquant ci-dessous, vous confirmez avoir remis la totalité du montant de <strong>@tnd($heldCash)</strong> à l'agent d'accueil du bureau FromDarna de Grombalia.
+                    En cliquant ci-dessous, vous confirmez avoir remis la totalité du montant de <strong>{{ \App\Support\Money::tnd($heldCash) }}</strong> à l'agent d'accueil du bureau FromDarna de Grombalia.
                 </p>
 
                 <label class="f">
@@ -41,7 +41,7 @@
                 </label>
 
                 <button class="btn block olive glow grad-animate" type="submit" onclick="return confirm('Confirmer la remise de {{ \App\Support\Money::tnd($heldCash) }} au QG ?')">
-                    💵 Valider la remise de @tnd($heldCash) au QG
+                    💵 Valider la remise de {{ \App\Support\Money::tnd($heldCash) }} au QG
                 </button>
             </form>
         @else
@@ -60,7 +60,7 @@
                     <div style="padding:10px 12px;background:var(--bg2);border-radius:12px;border:1px solid var(--line)">
                         <div style="display:flex;justify-content:space-between;font-size:14px">
                             <strong>#{{ $drop->reference }}</strong>
-                            <strong style="color:#2E7D32">@tnd($drop->amount_millimes)</strong>
+                            <strong style="color:#2E7D32">{{ \App\Support\Money::tnd($drop->amount_millimes) }}</strong>
                         </div>
                         <div class="mut" style="font-size:12px;margin-top:4px">
                             {{ $drop->created_at->format('d/m/Y à H:i') }} · <span class="bd g" style="font-size:11px">Validé</span>

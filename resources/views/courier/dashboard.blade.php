@@ -21,7 +21,7 @@
 <div class="flash warn glow" role="alert" style="border-color:#C41317;margin-bottom:16px">
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
         <div>
-            <strong style="color:var(--tomate);font-size:15px">🛑 Plafond de cash atteint (@tnd($heldCash) / @tnd($cashLimit))</strong>
+            <strong style="color:var(--tomate);font-size:15px">🛑 Plafond de cash atteint ({{ \App\Support\Money::tnd($heldCash) }} / {{ \App\Support\Money::tnd($cashLimit) }})</strong>
             <p style="margin:4px 0 0;font-size:13px">Pour des raisons de sécurité, vous ne pouvez plus accepter de courses en cash tant que vous n'avez pas déposé vos encaissements au bureau FromDarna de Grombalia.</p>
         </div>
         <x-btn :href="route('courier.cash')" variant="red" size="sm" class="glow">Déposer mon cash au QG</x-btn>
@@ -35,7 +35,7 @@
     <div>
         <strong>Nouvelle course proposée !</strong> ·
         {{ $availableOrder->store->name }} ➔ {{ $availableOrder->delivery_landmark ?? $availableOrder->delivery_city }} ·
-        Cash à encaisser : <strong>@tnd($availableOrder->total_millimes)</strong>
+        Cash à encaisser : <strong>{{ \App\Support\Money::tnd($availableOrder->total_millimes) }}</strong>
     </div>
     <span class="acts">
         @if(!$isLimitExceeded)
@@ -74,7 +74,7 @@
             </div>
             <div class="sum t" style="margin-top:12px">
                 <span>Cash à encaisser au client</span>
-                <span>@tnd($activeOrder->total_millimes)</span>
+                <span>{{ \App\Support\Money::tnd($activeOrder->total_millimes) }}</span>
             </div>
             <div class="acts" style="margin-top:14px">
                 <x-btn :href="route('courier.delivery', $activeOrder->id)" class="glow grad-animate">
@@ -103,7 +103,7 @@
         </div>
 
         <div class="stat" style="margin-top:8px">
-            <b style="font-size:32px;color:{{ $isLimitExceeded ? 'var(--tomate)' : 'inherit' }}">@tnd($heldCash)</b>
+            <b style="font-size:32px;color:{{ $isLimitExceeded ? 'var(--tomate)' : 'inherit' }}">{{ \App\Support\Money::tnd($heldCash) }}</b>
         </div>
 
         <div class="bar {{ $cashPercent > 80 ? 'warn' : '' }}" style="margin:10px 0">
@@ -112,11 +112,11 @@
 
         <div style="display:flex;justify-content:space-between;font-size:12px" class="mut">
             <span>0 TND</span>
-            <span>Plafond : <strong>@tnd($cashLimit)</strong></span>
+            <span>Plafond : <strong>{{ \App\Support\Money::tnd($cashLimit) }}</strong></span>
         </div>
 
         <p class="mut" style="font-size:12.5px;margin-top:10px">
-            Au-delà de @tnd($cashLimit), le système bloque automatiquement les nouvelles courses cash jusqu'à la remise au QG.
+            Au-delà de {{ \App\Support\Money::tnd($cashLimit) }}, le système bloque automatiquement les nouvelles courses cash jusqu'à la remise au QG.
         </p>
 
         <div style="margin-top:12px;display:flex;gap:8px">

@@ -76,7 +76,7 @@
             @foreach($cashLimitExceededCouriers as $excCourier)
                 <div class="al" style="border-left: 4px solid #C41317; background: #fff1f0;">
                     <span>
-                        💰 <b>Plafond Cash Dépassé :</b> {{ $excCourier->name }} détient @tnd($excCourier->getHeldCashMillimes()) (Plafond: @tnd(150000)). Bloqué pour nouvelles courses.
+                        💰 <b>Plafond Cash Dépassé :</b> {{ $excCourier->name }} détient {{ \App\Support\Money::tnd($excCourier->getHeldCashMillimes()) }} (Plafond: {{ \App\Support\Money::tnd(150000) }}). Bloqué pour nouvelles courses.
                     </span>
                     <x-btn variant="ghost" size="sm" :href="route('ops.couriers')">Valider remise</x-btn>
                 </div>
@@ -139,7 +139,7 @@
                         <div class="mut" style="font-size:0.8rem;">📍 {{ $order->delivery_landmark ?? $order->delivery_city }}</div>
                     </td>
                     <td>
-                        <strong style="color:var(--olive);">@tnd($order->total_millimes)</strong>
+                        <strong style="color:var(--olive);">{{ \App\Support\Money::tnd($order->total_millimes) }}</strong>
                     </td>
                     <td>
                         <x-badge :type="$order->statusBadgeType()">{{ $order->statusLabel() }}</x-badge>

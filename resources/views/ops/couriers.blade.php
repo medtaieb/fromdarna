@@ -32,7 +32,7 @@
                         <div class="mut" style="font-size:0.8rem;">📞 {{ $drop->courier?->phone }}</div>
                     </td>
                     <td>
-                        <strong style="font-size:1.05rem;color:var(--olive);">@tnd($drop->amount_millimes)</strong>
+                        <strong style="font-size:1.05rem;color:var(--olive);">{{ \App\Support\Money::tnd($drop->amount_millimes) }}</strong>
                     </td>
                     <td>{{ $drop->created_at->format('d/m/Y H:i') }}</td>
                     <td class="mut">{{ $drop->notes ?? 'Dépôt standard' }}</td>
@@ -92,9 +92,9 @@
                 </td>
                 <td>
                     <strong style="color:{{ $isExceeded ? '#C41317' : 'inherit' }};font-size:1rem;">
-                        @tnd($heldCash)
+                        {{ \App\Support\Money::tnd($heldCash) }}
                     </strong>
-                    <span class="mut" style="font-size:0.85rem;"> / @tnd(150000)</span>
+                    <span class="mut" style="font-size:0.85rem;"> / {{ \App\Support\Money::tnd(150000) }}</span>
                 </td>
                 <td>
                     @if($isExceeded)
@@ -120,7 +120,7 @@
                 <tr>
                     <td><b>{{ $vDrop->reference }}</b></td>
                     <td>{{ $vDrop->courier?->name ?? 'Livreur' }}</td>
-                    <td><b>@tnd($vDrop->amount_millimes)</b></td>
+                    <td><b>{{ \App\Support\Money::tnd($vDrop->amount_millimes) }}</b></td>
                     <td class="mut">{{ $vDrop->validated_at?->format('d/m/Y H:i') ?? $vDrop->updated_at->format('d/m/Y H:i') }}</td>
                     <td>{{ $vDrop->validator?->name ?? 'Ops QG' }}</td>
                 </tr>

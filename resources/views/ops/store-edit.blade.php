@@ -97,7 +97,7 @@
                     <tr>
                         <td><b>{{ $p->name }}</b></td>
                         <td class="mut" style="font-size:0.85rem;max-width:320px;">{{ $p->description }}</td>
-                        <td><strong style="color:var(--olive);">@tnd($p->price_millimes)</strong></td>
+                        <td><strong style="color:var(--olive);">{{ \App\Support\Money::tnd($p->price_millimes) }}</strong></td>
                         <td>
                             <x-badge :type="$p->is_available ? 'g' : 'x'">
                                 {{ $p->is_available ? 'Disponible' : 'En rupture' }}

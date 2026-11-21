@@ -102,19 +102,19 @@
     <x-card class="glow">
         <div class="mut" style="font-size:12.5px">Ventes brutes (plats)</div>
         <div style="font-size:24px;font-weight:800;color:var(--olive);margin-top:2px">
-            @tnd($todayRevenue)
+            {{ \App\Support\Money::tnd($todayRevenue) }}
         </div>
     </x-card>
     <x-card>
         <div class="mut" style="font-size:12.5px">Commission FromDarna (12 %)</div>
         <div style="font-size:22px;font-weight:700;color:var(--tomate);margin-top:2px">
-            − @tnd($todayCommission)
+            − {{ \App\Support\Money::tnd($todayCommission) }}
         </div>
     </x-card>
     <x-card class="glow-brand">
         <div class="mut" style="font-size:12.5px">Net restaurant à recevoir</div>
         <div style="font-size:24px;font-weight:800;color:#2E7D32;margin-top:2px">
-            @tnd($todayNet)
+            {{ \App\Support\Money::tnd($todayNet) }}
         </div>
     </x-card>
 </div>
@@ -138,7 +138,7 @@
                     <span class="mut" style="font-size:13px">· Client : <b>{{ $order->user->name ?? 'Client' }}</b> ({{ $order->delivery_phone }})</span>
                 </div>
                 <div style="text-align:right">
-                    <strong style="font-size:17px;color:var(--rust)">@tnd($order->subtotal_millimes)</strong>
+                    <strong style="font-size:17px;color:var(--rust)">{{ \App\Support\Money::tnd($order->subtotal_millimes) }}</strong>
                     <div class="mut" style="font-size:12px">Reçue à {{ $order->created_at->format('H:i:s') }}</div>
                 </div>
             </div>
@@ -147,7 +147,7 @@
                 @foreach($order->items as $it)
                     <div class="order-item-row">
                         <span><strong>{{ $it->quantity }} ×</strong> {{ $it->product_name }}</span>
-                        <span class="mut">@tnd($it->line_total_millimes)</span>
+                        <span class="mut">{{ \App\Support\Money::tnd($it->line_total_millimes) }}</span>
                     </div>
                 @endforeach
             </div>

@@ -17,7 +17,7 @@
                 <div>
                     <h3>{{ $item->name }}</h3>
                     @if ($item->description)<div class="mut">{{ $item->description }}</div>@endif
-                    <strong>@tnd($item->price_millimes)</strong>
+                    <strong>{{ \App\Support\Money::tnd($item->price_millimes) }}</strong>
 
                     {{-- Options du produit --}}
                     @if ($item->options && $item->options->count())
@@ -27,7 +27,7 @@
                                     {{ $opt->is_required ? '⚙️' : '+' }}
                                     {{ $opt->name }}
                                     @if ($opt->price_millimes > 0)
-                                        (+@tnd($opt->price_millimes))
+                                        (+{{ \App\Support\Money::tnd($opt->price_millimes) }})
                                     @endif
                                     @if (!$opt->is_available)
                                         <em style="color:var(--r)">· indisponible</em>

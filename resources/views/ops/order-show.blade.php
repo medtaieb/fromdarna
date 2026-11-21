@@ -82,17 +82,17 @@
                                 </div>
                             @endif
                         </div>
-                        <div style="font-weight:600;">@tnd($item->total_millimes)</div>
+                        <div style="font-weight:600;">{{ \App\Support\Money::tnd($item->total_millimes) }}</div>
                     </div>
                 @endforeach
             </div>
 
             <div style="margin-top:16px;padding-top:12px;border-top:2px solid #ddd;">
-                <div class="sum"><span>Sous-total plats</span><span>@tnd($order->subtotal_millimes)</span></div>
-                <div class="sum"><span>Frais de livraison</span><span>@tnd($order->delivery_fee_millimes)</span></div>
+                <div class="sum"><span>Sous-total plats</span><span>{{ \App\Support\Money::tnd($order->subtotal_millimes) }}</span></div>
+                <div class="sum"><span>Frais de livraison</span><span>{{ \App\Support\Money::tnd($order->delivery_fee_millimes) }}</span></div>
                 <div class="sum t" style="font-size:1.15rem;color:var(--olive);font-weight:800;margin-top:8px;">
                     <span>Total commande ({{ strtoupper($order->payment_method) }})</span>
-                    <span>@tnd($order->total_millimes)</span>
+                    <span>{{ \App\Support\Money::tnd($order->total_millimes) }}</span>
                 </div>
             </div>
         </x-card>
@@ -163,7 +163,7 @@
                     <div>
                         <b>{{ $order->courier->name }}</b>
                         <div class="mut" style="font-size:0.8rem;">
-                            📞 {{ $order->courier->phone }} · Cash détenu : @tnd($order->courier->getHeldCashMillimes())
+                            📞 {{ $order->courier->phone }} · Cash détenu : {{ \App\Support\Money::tnd($order->courier->getHeldCashMillimes()) }}
                         </div>
                     </div>
                 </div>
@@ -185,7 +185,7 @@
                                 $cashExceeded = $c->isCashLimitExceeded();
                             @endphp
                             <option value="{{ $c->id }}" {{ $order->courier_id == $c->id ? 'selected' : '' }}>
-                                {{ $c->name }} ({{ $activeCount }} en cours, Cash: @tnd($c->getHeldCashMillimes())) {{ $cashExceeded ? '⚠️ PLAFOND DÉPASSÉ' : '' }}
+                                {{ $c->name }} ({{ $activeCount }} en cours, Cash: {{ \App\Support\Money::tnd($c->getHeldCashMillimes()) }}) {{ $cashExceeded ? '⚠️ PLAFOND DÉPASSÉ' : '' }}
                             </option>
                         @endforeach
                     </select>

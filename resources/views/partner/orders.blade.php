@@ -59,7 +59,7 @@
                             </div>
                         </td>
                         <td style="padding:12px 6px">
-                            <strong>@tnd($o->subtotal_millimes)</strong>
+                            <strong>{{ \App\Support\Money::tnd($o->subtotal_millimes) }}</strong>
                         </td>
                         <td style="padding:12px 6px">
                             <x-badge :type="$o->statusBadgeType()">{{ $o->statusLabel() }}</x-badge>

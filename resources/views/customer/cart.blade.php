@@ -22,7 +22,7 @@
             <div class="mi" data-line>
                 <div>
                     <h3>{{ $item->product->name }}</h3>
-                    <span class="mut">@tnd($item->product->price_millimes) l'unité</span>
+                    <span class="mut">{{ \App\Support\Money::tnd($item->product->price_millimes) }} l'unité</span>
                 </div>
                 <div class="row" style="gap:18px">
                     <form method="POST" action="{{ route('cart.update', $item) }}" style="display:contents">
@@ -33,7 +33,7 @@
                             <button type="button" data-step="+" aria-label="Ajouter">+</button>
                         </div>
                     </form>
-                    <strong data-line-total style="min-width:96px;text-align:right">@tnd($item->line_total)</strong>
+                    <strong data-line-total style="min-width:96px;text-align:right">{{ \App\Support\Money::tnd($item->line_total) }}</strong>
                     <form method="POST" action="{{ route('cart.remove', $item) }}">
                         @csrf @method('DELETE')
                         <button type="submit" class="btn ghost sm" aria-label="Supprimer">🗑</button>
@@ -50,9 +50,9 @@
 
     <x-card>
         <h2>Total</h2>
-        <div class="sum"><span>Sous-total</span><span data-total>@tnd($subtotal)</span></div>
-        <div class="sum"><span>Livraison</span><span>@tnd($fee)</span></div>
-        <div class="sum t"><span>Total à payer</span><span data-grand data-fee="{{ $fee }}">@tnd($total)</span></div>
+        <div class="sum"><span>Sous-total</span><span data-total>{{ \App\Support\Money::tnd($subtotal) }}</span></div>
+        <div class="sum"><span>Livraison</span><span>{{ \App\Support\Money::tnd($fee) }}</span></div>
+        <div class="sum t"><span>Total à payer</span><span data-grand data-fee="{{ $fee }}">{{ \App\Support\Money::tnd($total) }}</span></div>
         <p class="mut">Paiement en cash à la livraison. Ce devis est valable 10 minutes ; le prix est recalculé par nos serveurs à la confirmation.</p>
         @if($subtotal < 10000)
             <p class="mut" style="color:var(--r)">⚠️ Commande minimum : 10,000 TND</p>

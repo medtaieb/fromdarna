@@ -22,6 +22,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        \Illuminate\Support\Facades\Blade::directive('tnd', function ($expression) {
+            return "<?php echo e(\\App\\Support\\Money::tnd((int) ($expression))); ?>";
+        });
     }
 }

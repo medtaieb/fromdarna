@@ -111,11 +111,11 @@
         @foreach($items as $item)
             <div class="sum">
                 <span>{{ $item->quantity }} × {{ $item->product->name }}</span>
-                <span>@tnd($item->line_total)</span>
+                <span>{{ \App\Support\Money::tnd($item->line_total) }}</span>
             </div>
         @endforeach
-        <div class="sum"><span>Livraison ({{ $store->zone->name }})</span><span>@tnd($fee)</span></div>
-        <div class="sum t"><span>Total à payer</span><span>@tnd($total)</span></div>
+        <div class="sum"><span>Livraison ({{ $store->zone->name }})</span><span>{{ \App\Support\Money::tnd($fee) }}</span></div>
+        <div class="sum t"><span>Total à payer</span><span>{{ \App\Support\Money::tnd($total) }}</span></div>
         <button class="btn block glow grad-animate" type="submit">Confirmer la commande (Cash)</button>
         <a href="{{ route('cart') }}" class="btn ghost sm block" style="margin-top:8px">← Modifier le panier</a>
     </x-card>

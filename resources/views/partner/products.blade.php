@@ -27,7 +27,7 @@
             <div class="mi">
                 <div>
                     <h3>{{ $item->name }}</h3>
-                    <span class="mut">@tnd($item->price_millimes)</span>
+                    <span class="mut">{{ \App\Support\Money::tnd($item->price_millimes) }}</span>
                     @if ($item->description)
                         <div class="mut" style="font-size:0.85em">{{ $item->description }}</div>
                     @endif

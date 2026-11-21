@@ -14,7 +14,7 @@
     <x-card class="glow">
         <div class="mut" style="font-size:13px">Total des ventes (hors livraison)</div>
         <div style="font-size:26px;font-weight:800;color:var(--olive);margin-top:4px">
-            @tnd($totalSales)
+            {{ \App\Support\Money::tnd($totalSales) }}
         </div>
         <div class="mut" style="font-size:11.5px;margin-top:2px">Commandes livrées cumulées</div>
     </x-card>
@@ -22,7 +22,7 @@
     <x-card>
         <div class="mut" style="font-size:13px">Commission FromDarna ({{ ($store->commission_bps ?? 1200) / 100 }} %)</div>
         <div style="font-size:24px;font-weight:800;color:var(--tomate);margin-top:4px">
-            − @tnd($totalCommission)
+            − {{ \App\Support\Money::tnd($totalCommission) }}
         </div>
         <div class="mut" style="font-size:11.5px;margin-top:2px">Plateforme, mise en relation, marketing</div>
     </x-card>
@@ -30,7 +30,7 @@
     <x-card class="glow-brand">
         <div class="mut" style="font-size:13px">Net total dû au restaurant</div>
         <div style="font-size:26px;font-weight:800;color:#2E7D32;margin-top:4px">
-            @tnd($totalNet)
+            {{ \App\Support\Money::tnd($totalNet) }}
         </div>
         <div class="mut" style="font-size:11.5px;margin-top:2px">Versé chaque semaine par virement bancaire</div>
     </x-card>
@@ -56,9 +56,9 @@
                     <tr style="border-bottom:1px solid var(--line)">
                         <td style="padding:12px 8px"><strong>{{ $w['period'] }}</strong></td>
                         <td style="padding:12px 8px">{{ $w['count'] }} commande(s)</td>
-                        <td style="padding:12px 8px">@tnd($w['sales'])</td>
-                        <td style="padding:12px 8px;color:var(--tomate)">− @tnd($w['commission'])</td>
-                        <td style="padding:12px 8px;font-weight:700;color:#2E7D32">@tnd($w['net'])</td>
+                        <td style="padding:12px 8px">{{ \App\Support\Money::tnd($w['sales']) }}</td>
+                        <td style="padding:12px 8px;color:var(--tomate)">− {{ \App\Support\Money::tnd($w['commission']) }}</td>
+                        <td style="padding:12px 8px;font-weight:700;color:#2E7D32">{{ \App\Support\Money::tnd($w['net']) }}</td>
                         <td style="padding:12px 8px"><span class="bd o">En cours</span></td>
                     </tr>
                 @endforeach
