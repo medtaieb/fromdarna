@@ -78,16 +78,25 @@ Route::prefix('livreur')->group(function () {
 // ── Espace Ops (middleware: auth, role:ops,admin,finance) ──
 Route::prefix('ops')->group(function () {
     Route::get('/', [OpsController::class, 'dashboard'])->name('ops.dashboard');
-    Route::view('/commandes', 'ops.orders')->name('ops.orders');
-    Route::view('/commandes/{id}', 'ops.order-show')->name('ops.orders.show');
+    Route::get('/commandes', [OpsController::class, 'orders'])->name('ops.orders');
+    Route::get('/commandes/{id}', [OpsController::class, 'orderShow'])->name('ops.orders.show');
+    Route::post('/commandes/{order}/assign', [OpsController::class, 'assignCourier'])->name('ops.orders.assign');
+    Route::post('/commandes/{order}/status', [OpsController::class, 'updateStatus'])->name('ops.orders.status');
+    Route::post('/commandes/{order}/cancel', [OpsController::class, 'cancelOrRefund'])->name('ops.orders.cancel');
+
     Route::get('/dispatch', [OpsController::class, 'dispatch'])->name('ops.dispatch');
     Route::get('/dispatch/live-data', [OpsController::class, 'liveData'])->name('ops.dispatch.live');
-    Route::post('/orders/{order}/assign', [OpsController::class, 'assignCourier'])->name('ops.orders.assign');
+
     Route::get('/restaurants', [OpsController::class, 'restaurants'])->name('ops.stores');
     Route::view('/restaurants/{id}', 'ops.store-edit')->name('ops.stores.edit');
     Route::view('/zones', 'ops.zones')->name('ops.zones');
+
     Route::get('/livreurs', [OpsController::class, 'couriers'])->name('ops.couriers');
-    Route::view('/clients', 'ops.customers')->name('ops.customers');
+    Route::post('/livreurs/cash-drop/{drop}/validate', [OpsController::class, 'validateCashDrop'])->name('ops.couriers.drop.validate');
+
+    Route::get('/clients', [OpsController::class, 'customers'])->name('ops.customers');
+    Route::post('/incidents/{incident}/resolve', [OpsController::class, 'resolveIncident'])->name('ops.incidents.resolve');
+
     Route::get('/grand-livre', [OpsController::class, 'ledger'])->name('ops.ledger');
     Route::view('/versements', 'ops.payouts')->name('ops.payouts');
     Route::view('/utilisateurs', 'ops.users')->name('ops.users');

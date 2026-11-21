@@ -82,6 +82,11 @@ class Order extends Model
         return $this->hasMany(OrderItem::class);
     }
 
+    public function incidents(): HasMany
+    {
+        return $this->hasMany(OrderIncident::class);
+    }
+
     // ── Générateur de référence unique ────────────────────────────────────
     public static function generateRef(): string
     {

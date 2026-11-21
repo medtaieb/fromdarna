@@ -3,39 +3,160 @@
 @section('title', 'Tableau de bord Ops')
 
 @section('content')
-<x-title title="Tableau de bord" sub="Grombalia · aujourd’hui, 12:46 (données d’exemple)">
-    <x-slot name="actions"><x-btn :href="route('ops.dispatch')">Ouvrir le dispatch</x-btn></x-slot>
+<x-title title="Tableau de bord Ops" sub="Supervision en direct · Cap Bon & Grombalia">
+    <x-slot name="actions">
+        <x-btn :href="route('ops.dispatch')">🗺️ Ouvrir la carte Dispatch</x-btn>
+    </x-slot>
 </x-title>
 
+@if(session('success'))
+    <div class="al g mb">
+        <span>✓ {{ session('success') }}</span>
+    </div>
+@endif
+
 <div class="grid g4">
-    <x-stat label="Livrées à l’heure" value="27" sub="Étoile du Nord · cible ≥ 30/jour" class="hot" />
-    <x-stat label="Acceptation restaurant" value="96 %" sub="cible ≥ 95 %" />
-    <x-stat label="Délai médian" value="34 min" sub="cible ≤ 35 min" />
-    <x-stat label="Écart de cash inexpliqué" value="0,000 TND" sub="cible : 0" />
+    <x-stat label="Livrées aujourd’hui" :value="$deliveredToday" sub="Commandes complétées" class="hot" />
+    <x-stat label="Taux d’acceptation" :value="$acceptanceRate . ' %'" sub="Cible standard ≥ 95 %" />
+    <x-stat label="Délai médian" :value="$medianDelayMinutes . ' min'" sub="Création → Livraison au client" />
+    <x-stat label="Cash flotte non déposé" :value="\App\Support\Money::tnd($uncollectedCashMillimes)" sub="Détenu par les livreurs en tournée" />
 </div>
 
 <div class="cols">
     <x-card>
-        <h2>Alertes</h2>
-        <div class="al r"><span><strong>#FD-1043</strong> · restaurant sans réponse depuis 60 s</span><x-btn variant="red" size="sm" :href="route('ops.orders.show', 1043)">Traiter</x-btn></div>
-        <div class="al"><span><strong>#FD-1041</strong> · prête depuis 5 min, sans livreur</span><x-btn size="sm" :href="route('ops.dispatch')">Assigner</x-btn></div>
-        <div class="al"><span><strong>#FD-1040</strong> · en retard de 15 min sur l’heure annoncée</span><x-btn variant="ghost" size="sm" :href="route('ops.orders.show', 1040)">Prévenir le client</x-btn></div>
-        <div class="al g"><span>Tous les portails partenaires sont connectés.</span></div>
+        <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:12px;">
+            <h2 style="margin:0;">🚨 File d’escalade & alertes actives</h2>
+            <x-btn variant="ghost" size="sm" :href="route('ops.dashboard')">↻ Actualiser</x-btn>
+        </div>
+
+        @php
+            $hasAlerts = $unresponsiveStoreOrders->isNotEmpty() 
+                || $unassignedReadyOrders->isNotEmpty() 
+                || $delayedOrders->isNotEmpty() 
+                || $cashLimitExceededCouriers->isNotEmpty() 
+                || $openIncidents->isNotEmpty();
+        @endphp
+
+        @if(!$hasAlerts)
+            <div class="al g">
+                <span>✓ <strong>Réseau fluide :</strong> Aucune alerte critique, toutes les commandes sont prises en charge.</span>
+            </div>
+        @else
+            {{-- Alertes Restaurant sans réponse > 60s --}}
+            @foreach($unresponsiveStoreOrders as $alertOrder)
+                <div class="al r">
+                    <span>
+                        <strong>#{{ $alertOrder->ref }}</strong> · <b>{{ $alertOrder->store->name }}</b> sans réponse depuis {{ $alertOrder->created_at->diffForHumans() }}.
+                    </span>
+                    <x-btn variant="red" size="sm" :href="route('ops.orders.show', $alertOrder->id)">Relancer / Traiter</x-btn>
+                </div>
+            @endforeach
+
+            {{-- Alertes Commande prête sans livreur > 5 min --}}
+            @foreach($unassignedReadyOrders as $readyOrder)
+                <div class="al" style="border-left: 4px solid var(--accent, #98551C); background: #FFF4D2;">
+                    <span>
+                        <strong>#{{ $readyOrder->ref }}</strong> · Prête chez <b>{{ $readyOrder->store->name }}</b> depuis {{ $readyOrder->ready_at?->diffForHumans() ?? 'plusieurs minutes' }}, sans livreur !
+                    </span>
+                    <x-btn size="sm" :href="route('ops.orders.show', $readyOrder->id)">Assigner d’urgence</x-btn>
+                </div>
+            @endforeach
+
+            {{-- Alertes Incidents de terrain --}}
+            @foreach($openIncidents as $inc)
+                <div class="al r">
+                    <span>
+                        ⚠️ <b>Incident sur #{{ $inc->order?->ref }}</b> : {{ $inc->description }} (signalé par {{ $inc->courier?->name }})
+                    </span>
+                    <x-btn variant="ghost" size="sm" :href="route('ops.customers')">Résoudre</x-btn>
+                </div>
+            @endforeach
+
+            {{-- Alertes Plafond de cash dépassé --}}
+            @foreach($cashLimitExceededCouriers as $excCourier)
+                <div class="al" style="border-left: 4px solid #C41317; background: #fff1f0;">
+                    <span>
+                        💰 <b>Plafond Cash Dépassé :</b> {{ $excCourier->name }} détient @tnd($excCourier->getHeldCashMillimes()) (Plafond: @tnd(150000)). Bloqué pour nouvelles courses.
+                    </span>
+                    <x-btn variant="ghost" size="sm" :href="route('ops.couriers')">Valider remise</x-btn>
+                </div>
+            @endforeach
+
+            {{-- Alertes Retard important --}}
+            @foreach($delayedOrders as $delOrder)
+                <div class="al">
+                    <span>
+                        ⏱️ <strong>#{{ $delOrder->ref }}</strong> · En cours depuis {{ $delOrder->created_at->diffInMinutes() }} min ({{ $delOrder->store->name }} → {{ $delOrder->delivery_landmark ?? $delOrder->delivery_city }})
+                    </span>
+                    <x-btn variant="ghost" size="sm" :href="route('ops.orders.show', $delOrder->id)">Superviser</x-btn>
+                </div>
+            @endforeach
+        @endif
     </x-card>
 
     <x-card>
-        <h2>Commandes par heure</h2>
-        @foreach ([['11 h', 40], ['12 h', 95], ['13 h', 70], ['14 h', 30]] as $h)
-            <div class="row" style="flex-wrap:nowrap"><span style="width:44px">{{ $h[0] }}</span><div class="bar" style="flex:1"><i style="width:{{ $h[1] }}%"></i></div></div>
-        @endforeach
+        <h2>Flux des commandes par heure (Aujourd’hui)</h2>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px;">
+            @foreach ($hourlyStats as $h)
+                @php
+                    $pct = $maxPerHour > 0 ? round(($h['count'] / $maxPerHour) * 100) : 0;
+                @endphp
+                <div class="row" style="flex-wrap:nowrap;align-items:center;">
+                    <span style="width:48px;font-size:0.85rem;color:var(--muted);font-weight:600;">{{ $h['hour'] }}</span>
+                    <div class="bar" style="flex:1;background:#f0e9df;border-radius:6px;height:14px;overflow:hidden;position:relative;">
+                        <i style="display:block;height:100%;background:linear-gradient(90deg, #98551C, #B08861);width:{{ max(4, $pct) }}%;border-radius:6px;"></i>
+                    </div>
+                    <span style="width:32px;text-align:right;font-size:0.85rem;font-weight:700;">{{ $h['count'] }}</span>
+                </div>
+            @endforeach
+        </div>
     </x-card>
 </div>
 
 <x-card>
-    <h2>Commandes en cours</h2>
-    @php
-        $rows = array_map(fn ($o) => [$o['id'] . '|' . $o['time'], $o['store'], $o['customer'], \App\Support\Sample::badge($o['status']), $o['courier']], array_slice(\App\Support\Sample::orders(), 0, 4));
-    @endphp
-    <x-table :headers="['Commande', 'Restaurant', 'Client', 'Statut', 'Livreur']" :rows="$rows" />
+    <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <h2 style="margin:0;">Commandes en cours d’exécution</h2>
+        <x-btn variant="ghost" size="sm" :href="route('ops.orders')">Toutes les commandes →</x-btn>
+    </div>
+
+    @if($activeOrders->isEmpty())
+        <div style="text-align:center;padding:32px;color:var(--muted);">
+            Aucune commande active en ce moment.
+        </div>
+    @else
+        <x-table :headers="['Commande', 'Restaurant', 'Client & Zone', 'Total cash', 'Statut', 'Livreur', '']">
+            @foreach ($activeOrders as $order)
+                <tr>
+                    <td>
+                        <b>#{{ $order->ref }}</b>
+                        <div class="mut">{{ $order->created_at->format('H:i') }} (il y a {{ $order->created_at->diffInMinutes() }} min)</div>
+                    </td>
+                    <td>
+                        <b>{{ $order->store->name }}</b>
+                    </td>
+                    <td>
+                        <div>{{ $order->user?->name ?? 'Client direct' }}</div>
+                        <div class="mut" style="font-size:0.8rem;">📍 {{ $order->delivery_landmark ?? $order->delivery_city }}</div>
+                    </td>
+                    <td>
+                        <strong style="color:var(--olive);">@tnd($order->total_millimes)</strong>
+                    </td>
+                    <td>
+                        <x-badge :type="$order->statusBadgeType()">{{ $order->statusLabel() }}</x-badge>
+                    </td>
+                    <td>
+                        @if($order->courier)
+                            <span>🚴 {{ $order->courier->name }}</span>
+                        @else
+                            <span class="mut" style="color:#C41317;font-weight:600;">⚠️ Non assigné</span>
+                        @endif
+                    </td>
+                    <td>
+                        <x-btn variant="ghost" size="sm" :href="route('ops.orders.show', $order->id)">Intervenir</x-btn>
+                    </td>
+                </tr>
+            @endforeach
+        </x-table>
+    @endif
 </x-card>
 @endsection
