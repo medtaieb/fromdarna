@@ -8,10 +8,10 @@
 </x-title>
 
 <div class="grid g4">
-    <x-stat label="Cash détenu par les livreurs" value="138,500 TND" />
-    <x-stat label="Caisse QG" value="212,000 TND" />
-    <x-stat label="Dû aux restaurants" value="1 012,000 TND" />
-    <x-stat label="Dû aux livreurs" value="96,200 TND" />
+    <x-stat label="Cash détenu par les livreurs" :value="\App\Support\Money::tnd($fleetCash ?? 0)" sub="En circulation dans les sacoches" />
+    <x-stat label="Caisse physique QG" :value="\App\Support\Money::tnd($hqCash ?? 0)" sub="Remises validées au bureau" />
+    <x-stat label="Dû aux restaurants" :value="\App\Support\Money::tnd($restaurantsDue ?? 0)" sub="Ventes nettes de commission (88%)" />
+    <x-stat label="Dû aux livreurs" :value="\App\Support\Money::tnd($couriersDue ?? 0)" sub="2,500 TND par course livrée" />
 </div>
 
 <div class="al g"><span>Rapprochement du jour : <strong>aucun écart</strong></span><x-badge type="g">Équilibré</x-badge></div>

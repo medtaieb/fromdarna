@@ -9,10 +9,10 @@
     </header>
     @php
         $spaces = [
-            ['App client', 'Android, FR/AR, OTP, panier, suivi', 'c.login', 'g-warm'],
-            ['Partenaire', 'Commandes, ruptures, relevés', 'partner.orders', 'g-olive'],
-            ['Livreur', 'Course, cash, gains', 'courier.ride', 'g-tomato'],
-            ['Ops', 'Dispatch, cash, grand livre', 'ops.dispatch', 'g-olive'],
+            ['App client', 'Menus, panier, géolocalisation GPS, suivi direct', 'feed', 'g-warm'],
+            ['Espace Partenaire', 'Commandes cuisine, alerte sonore, menu & ruptures, relevés', 'partner.dashboard', 'g-olive'],
+            ['Espace Livreur', 'Courses live, guidage GPS, calcul cash & plafond 150 TND', 'courier.dashboard', 'g-tomato'],
+            ['Console Ops & Dispatch', 'Supervision temps réel, flotte GPS, alertes d’escalade', 'ops.dashboard', 'g-olive'],
         ];
     @endphp
     <div class="hub-grid">

@@ -7,7 +7,7 @@
         ]],
         'courier' => ['Espace Livreur', [
             'Service' => [['courier.dashboard', 'Ma course'], ['courier.delivery', 'Étapes de livraison', ['id' => 1041]], ['courier.incident', 'Signaler un incident']],
-            'Finance' => [['courier.earnings', 'Cash et gains']],
+            'Finance' => [['courier.earnings', 'Cash et gains'], ['courier.cash', 'Remise d’espèces']],
         ]],
         'ops' => ['Espace Ops', [
             'Exploitation' => [['ops.dashboard', 'Tableau de bord'], ['ops.orders', 'Commandes'], ['ops.dispatch', 'Dispatch']],

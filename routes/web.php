@@ -88,8 +88,12 @@ Route::prefix('ops')->group(function () {
     Route::get('/dispatch/live-data', [OpsController::class, 'liveData'])->name('ops.dispatch.live');
 
     Route::get('/restaurants', [OpsController::class, 'restaurants'])->name('ops.stores');
-    Route::view('/restaurants/{id}', 'ops.store-edit')->name('ops.stores.edit');
-    Route::view('/zones', 'ops.zones')->name('ops.zones');
+    Route::get('/restaurants/{id}', [OpsController::class, 'storeEdit'])->name('ops.stores.edit');
+    Route::post('/restaurants/{id}', [OpsController::class, 'storeUpdate'])->name('ops.stores.update');
+    Route::post('/restaurants/{id}/toggle', [OpsController::class, 'storeToggleStatus'])->name('ops.stores.toggle');
+
+    Route::get('/zones', [OpsController::class, 'zones'])->name('ops.zones');
+    Route::post('/zones/{zone}/toggle', [OpsController::class, 'zoneToggleStatus'])->name('ops.zones.toggle');
 
     Route::get('/livreurs', [OpsController::class, 'couriers'])->name('ops.couriers');
     Route::post('/livreurs/cash-drop/{drop}/validate', [OpsController::class, 'validateCashDrop'])->name('ops.couriers.drop.validate');
@@ -98,12 +102,16 @@ Route::prefix('ops')->group(function () {
     Route::post('/incidents/{incident}/resolve', [OpsController::class, 'resolveIncident'])->name('ops.incidents.resolve');
 
     Route::get('/grand-livre', [OpsController::class, 'ledger'])->name('ops.ledger');
-    Route::view('/versements', 'ops.payouts')->name('ops.payouts');
-    Route::view('/utilisateurs', 'ops.users')->name('ops.users');
-    Route::view('/audit', 'ops.audit')->name('ops.audit');
+    Route::get('/versements', [OpsController::class, 'payouts'])->name('ops.payouts');
+    Route::get('/utilisateurs', [OpsController::class, 'users'])->name('ops.users');
+    Route::get('/audit', [OpsController::class, 'audit'])->name('ops.audit');
 });
 
 // ── Raccourcis et alias ───────────────────────────────────
+Route::get('/hub', function () {
+    return view('hub');
+})->name('hub');
+
 Route::get('/test', function () {
     return view('teste');
 });

@@ -1,16 +1,41 @@
 @extends('layouts.portal')
 @section('role', 'ops')
-@section('title', 'Journal d’audit')
+@section('title', 'Journal d’Audit')
 
 @section('content')
-<x-title title="Journal d’audit" sub="Toutes les actions sensibles sont enregistrées avec leur auteur." />
+<x-title title="Journal d’audit & Traçabilité" sub="Enregistrement immuable de toutes les actions opérationnelles et financières" />
+
 <x-card>
-    <x-table :headers="['Date', 'Auteur', 'Action', 'Objet']" :rows="[
-        ['Aujourd’hui 12:45', 'Yosra B.', 'Relance restaurant', '#FD-1043'],
-        ['Aujourd’hui 12:31', 'Yosra B.', 'Assignation manuelle', '#FD-1041 → Walid T.'],
-        ['Aujourd’hui 11:58', 'Karim H.', 'Validation de versement', 'Sultan Grill · semaine 42'],
-        ['Hier 17:20', 'Yosra B.', 'Remboursement validé', '#FD-1031 · 3,500 TND'],
-        ['Hier 09:05', 'Admin', 'Changement de commission', 'Dar Zitouna · 1200 bps'],
-    ]" />
+    <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <h2 style="margin:0;">Événements récents tracés sur la plateforme</h2>
+    </div>
+
+    @if($events->isEmpty())
+        <div style="text-align:center;padding:32px;color:var(--muted);">
+            Aucun événement enregistré dans le journal d'audit pour l'instant.
+        </div>
+    @else
+        <x-table :headers="['Date / Heure', 'Auteur / Acteur', 'Action opérée', 'Objet concerné']">
+            @foreach ($events as $event)
+                <tr>
+                    <td class="mut" style="font-size:0.85rem;white-space:nowrap;">
+                        <b>{{ $event['date'] }}</b>
+                    </td>
+                    <td>
+                        <b>{{ $event['author'] }}</b>
+                    </td>
+                    <td>
+                        <span>{{ $event['action'] }}</span>
+                    </td>
+                    <td>
+                        <strong style="color:var(--olive);">{{ $event['object'] }}</strong>
+                    </td>
+                </tr>
+            @endforeach
+        </x-table>
+    @endif
+    <p class="mut" style="font-size:0.8rem;margin-top:12px;">
+        ℹ️ Le journal d'audit est en ajout seul (append-only). Aucune écriture ne peut être modifiée ni supprimée.
+    </p>
 </x-card>
 @endsection

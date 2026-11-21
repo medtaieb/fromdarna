@@ -422,6 +422,211 @@ class OpsController extends Controller
         return back()->with('success', "Incident #{$incident->id} marqué comme résolu.");
     }
 
-    public function restaurants() { return view('ops.stores', ['stores' => Store::with('zone')->get()]); }
-    public function ledger() { return view('ops.ledger', ['lines' => Demo::ledger()]); }
+    /**
+     * Liste des restaurants partenaires & état opérationnel
+     */
+    public function restaurants()
+    {
+        $stores = Store::with(['zone', 'products'])->get();
+        return view('ops.stores', compact('stores'));
+    }
+
+    /**
+     * Édition d'un restaurant (commission, prep, statut, horaires)
+     */
+    public function storeEdit($id)
+    {
+        $store = Store::with(['zone', 'categories.products'])->findOrFail($id);
+        $zones = Zone::all();
+        return view('ops.store-edit', compact('store', 'zones'));
+    }
+
+    /**
+     * Sauvegarde des modifications restaurant
+     */
+    public function storeUpdate(Request $request, $id)
+    {
+        $store = Store::findOrFail($id);
+
+        $validated = $request->validate([
+            'name'             => 'required|string|max:100',
+            'commission_bps'   => 'required|integer|min:0|max:5000',
+            'avg_prep_minutes' => 'required|integer|min:5|max:120',
+            'phone'            => 'nullable|string|max:20',
+            'address'          => 'nullable|string|max:255',
+            'zone_id'          => 'required|exists:zones,id',
+            'is_open'          => 'nullable|boolean',
+        ]);
+
+        $store->update([
+            'name'             => $validated['name'],
+            'commission_bps'   => $validated['commission_bps'],
+            'avg_prep_minutes' => $validated['avg_prep_minutes'],
+            'phone'            => $validated['phone'],
+            'address'          => $validated['address'],
+            'zone_id'          => $validated['zone_id'],
+            'is_open'          => $request->boolean('is_open'),
+        ]);
+
+        return back()->with('success', "Restaurant « {$store->name} » mis à jour avec succès.");
+    }
+
+    /**
+     * Basculer l'ouverture d'un restaurant
+     */
+    public function storeToggleStatus($id)
+    {
+        $store = Store::findOrFail($id);
+        $store->update(['is_open' => ! $store->is_open]);
+        $status = $store->is_open ? 'ouvert' : 'fermé';
+        return back()->with('success', "Le restaurant {$store->name} est maintenant {$status}.");
+    }
+
+    /**
+     * Zones de livraison & paramétrage tarifaire
+     */
+    public function zones()
+    {
+        $zones = Zone::withCount('stores')->get();
+        return view('ops.zones', compact('zones'));
+    }
+
+    /**
+     * Basculer l'activation d'une zone
+     */
+    public function zoneToggleStatus(Zone $zone)
+    {
+        $zone->update(['is_active' => ! $zone->is_active]);
+        $state = $zone->is_active ? 'activée' : 'suspendue';
+        return back()->with('success', "La zone {$zone->name} est maintenant {$state}.");
+    }
+
+    /**
+     * Gestion des versements et règlements partenaires
+     */
+    public function payouts()
+    {
+        $stores = Store::with('zone')->get()->map(function ($store) {
+            $delivered = Order::where('store_id', $store->id)
+                ->where('status', 'DELIVERED')
+                ->get();
+
+            $sales = $delivered->sum('subtotal_millimes');
+            $commRate = ($store->commission_bps ?? 1200) / 10000;
+            $comm = (int) round($sales * $commRate);
+            $net = $sales - $comm;
+
+            return [
+                'store'      => $store,
+                'count'      => $delivered->count(),
+                'sales'      => $sales,
+                'commission' => $comm,
+                'net'        => $net,
+                'status'     => $net > 0 ? 'À verser' : 'Réglé',
+            ];
+        });
+
+        $cashDrops = CourierCashDrop::with(['courier', 'validator'])
+            ->latest()
+            ->take(15)
+            ->get();
+
+        return view('ops.payouts', compact('stores', 'cashDrops'));
+    }
+
+    /**
+     * Annuaire des utilisateurs et attribution des rôles
+     */
+    public function users(Request $request)
+    {
+        $query = User::withCount(['orders', 'assignedOrders']);
+
+        if ($request->filled('role')) {
+            $query->where('role', $request->input('role'));
+        }
+
+        if ($request->filled('q')) {
+            $q = trim($request->input('q'));
+            $query->where(function ($b) use ($q) {
+                $b->where('name', 'like', "%{$q}%")
+                  ->orWhere('phone', 'like', "%{$q}%")
+                  ->orWhere('email', 'like', "%{$q}%");
+            });
+        }
+
+        $users = $query->latest()->paginate(20)->withQueryString();
+
+        return view('ops.users', compact('users'));
+    }
+
+    /**
+     * Journal d'audit chronologique
+     */
+    public function audit()
+    {
+        $orders = Order::with(['store', 'user', 'courier'])
+            ->latest()
+            ->take(15)
+            ->get()
+            ->map(function ($o) {
+                return [
+                    'date'   => $o->updated_at->format('d/m/Y H:i'),
+                    'author' => $o->courier?->name ?? ($o->user?->name ?? 'Système'),
+                    'action' => 'Transition statut ' . $o->statusLabel(),
+                    'object' => '#' . $o->ref . ' · ' . $o->store->name,
+                ];
+            });
+
+        $drops = CourierCashDrop::with(['courier', 'validator'])
+            ->latest()
+            ->take(10)
+            ->get()
+            ->map(function ($d) {
+                return [
+                    'date'   => $d->created_at->format('d/m/Y H:i'),
+                    'author' => $d->validator?->name ?? $d->courier?->name ?? 'Ops QG',
+                    'action' => 'Dépôt cash physique (' . Money::tnd($d->amount_millimes) . ')',
+                    'object' => $d->reference . ' · ' . ($d->courier?->name ?? 'Livreur'),
+                ];
+            });
+
+        $incidents = OrderIncident::with(['order', 'courier'])
+            ->latest()
+            ->take(10)
+            ->get()
+            ->map(function ($inc) {
+                return [
+                    'date'   => $inc->created_at->format('d/m/Y H:i'),
+                    'author' => $inc->courier?->name ?? 'Livreur',
+                    'action' => 'Signalement incident: ' . ucfirst(str_replace('_', ' ', $inc->type)),
+                    'object' => '#' . ($inc->order?->ref ?? $inc->order_id),
+                ];
+            });
+
+        $events = $orders->concat($drops)->concat($incidents)->sortByDesc('date')->values();
+
+        return view('ops.audit', compact('events'));
+    }
+
+    public function ledger()
+    {
+        $couriers = User::where('role', 'courier')->get();
+        $fleetCash = $couriers->sum(fn ($c) => $c->getHeldCashMillimes());
+        $hqCash = CourierCashDrop::where('status', 'validated')->sum('amount_millimes');
+
+        $deliveredOrders = Order::where('status', 'DELIVERED')->get();
+        $deliveredCount = $deliveredOrders->count();
+        $couriersDue = $deliveredCount * 2500; // 2.500 TND par course
+
+        $totalSubtotal = $deliveredOrders->sum('subtotal_millimes');
+        $restaurantsDue = (int) round($totalSubtotal * 0.88); // 88% net après commission 12%
+
+        return view('ops.ledger', [
+            'lines'          => Demo::ledger(),
+            'fleetCash'      => $fleetCash,
+            'hqCash'         => $hqCash,
+            'restaurantsDue' => $restaurantsDue,
+            'couriersDue'    => $couriersDue,
+        ]);
+    }
 }
