@@ -72,6 +72,57 @@ class User extends Authenticatable
         return $this->hasMany(Order::class, 'courier_id');
     }
 
+    public function cashDrops(): HasMany
+    {
+        return $this->hasMany(CourierCashDrop::class);
+    }
+
+    public function incidents(): HasMany
+    {
+        return $this->hasMany(OrderIncident::class, 'courier_id');
+    }
+
+    /**
+     * Montant total de cash détenu en main par le livreur (en millimes)
+     */
+    public function getHeldCashMillimes(): int
+    {
+        // Total cash encaissé sur les commandes livrées
+        $collectedCash = $this->assignedOrders()
+            ->where('status', 'DELIVERED')
+            ->where('payment_method', 'cash')
+            ->sum('total_millimes');
+
+        // Total cash déjà remis au QG
+        $droppedCash = $this->cashDrops()
+            ->where('status', 'validated')
+            ->sum('amount_millimes');
+
+        $balance = $collectedCash - $droppedCash;
+        return max(0, (int) $balance);
+    }
+
+    /**
+     * Vérifie si le livreur a dépassé le plafond de cash de 150 TND (150 000 millimes)
+     */
+    public function isCashLimitExceeded(): bool
+    {
+        return $this->getHeldCashMillimes() >= 150000;
+    }
+
+    /**
+     * Gains du livreur aujourd'hui (tarif fixe 2,500 TND par course livrée)
+     */
+    public function getTodayEarningsMillimes(): int
+    {
+        $count = $this->assignedOrders()
+            ->where('status', 'DELIVERED')
+            ->whereDate('delivered_at', today())
+            ->count();
+
+        return $count * 2500;
+    }
+
     public function hasRole(...$roles): bool
     {
         return in_array($this->role, $roles, true);

@@ -69,7 +69,10 @@ Route::prefix('livreur')->group(function () {
     Route::post('/courses/{order}/status', [CourierController::class, 'updateOrderStatus'])->name('courier.order.status');
     Route::post('/location/ping', [CourierController::class, 'updateLocation'])->name('courier.location.ping');
     Route::get('/cash-et-gains', [CourierController::class, 'earnings'])->name('courier.earnings');
+    Route::get('/remise-cash', [CourierController::class, 'cash'])->name('courier.cash');
+    Route::post('/remise-cash', [CourierController::class, 'dropCash'])->name('courier.cash.drop');
     Route::get('/incident', [CourierController::class, 'incident'])->name('courier.incident');
+    Route::post('/incident', [CourierController::class, 'storeIncident'])->name('courier.incident.store');
 });
 
 // ── Espace Ops (middleware: auth, role:ops,admin,finance) ──
