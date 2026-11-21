@@ -340,17 +340,21 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Surveillance automatique des nouvelles commandes toutes les 4 secondes
     let previousNewCount = {{ $newOrders->count() }};
+    let previousActiveCount = {{ $preparingOrders->count() + $readyOrders->count() }};
 
     function checkLiveOrders() {
         fetch("{{ route('partner.api.live') }}")
             .then(res => res.json())
             .then(data => {
-                if (data.new_count > previousNewCount) {
-                    playKitchenChime();
-                    // Recharger la page pour afficher la nouvelle commande dans la console
+                if (data.new_count > previousNewCount || (previousActiveCount !== null && data.active_count !== previousActiveCount)) {
+                    if (data.new_count > previousNewCount) {
+                        playKitchenChime();
+                    }
+                    // Recharger la page pour synchroniser la console en direct
                     window.location.reload();
                 }
                 previousNewCount = data.new_count;
+                previousActiveCount = data.active_count;
             })
             .catch(err => console.log("Erreur polling commandes", err));
     }

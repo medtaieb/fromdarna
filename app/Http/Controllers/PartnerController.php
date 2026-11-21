@@ -250,10 +250,15 @@ class PartnerController extends Controller
                 ];
             });
 
+        $activeCount = Order::where('store_id', $store->id)
+            ->whereIn('status', ['ACCEPTED', 'READY'])
+            ->count();
+
         return response()->json([
-            'new_count'  => $newOrders->count(),
-            'new_orders' => $newOrders,
-            'is_open'    => (bool) $store->is_open,
+            'new_count'    => $newOrders->count(),
+            'active_count' => $activeCount,
+            'new_orders'   => $newOrders,
+            'is_open'      => (bool) $store->is_open,
         ]);
     }
 

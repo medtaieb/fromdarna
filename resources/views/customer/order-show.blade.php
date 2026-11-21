@@ -142,11 +142,18 @@ document.addEventListener('DOMContentLoaded', function () {
     // Ajuster vue
     map.fitBounds(L.featureGroup(boundsGroup).getBounds().pad(0.2));
 
-    // Polling en temps réel pour suivre le livreur
+    // Polling en temps réel pour suivre le livreur (Sync 3.5s)
+    let currentStatus = "{{ $order->status }}";
     function pollTracking() {
         fetch("{{ route('orders.tracking.live', $order) }}")
             .then(res => res.json())
             .then(data => {
+                if (data.status && data.status !== currentStatus) {
+                    // Si le restaurant accepte, prépare ou livre, recharger pour actualiser les étapes
+                    window.location.reload();
+                    return;
+                }
+
                 if (data.status_label) {
                     const badge = document.getElementById('order-status-badge');
                     if (badge) badge.textContent = data.status_label;
@@ -183,7 +190,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     pollTracking();
-    setInterval(pollTracking, 5000);
+    setInterval(pollTracking, 3500);
 });
 </script>
 @endsection

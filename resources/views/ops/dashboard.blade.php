@@ -5,6 +5,10 @@
 @section('content')
 <x-title title="Tableau de bord Ops" sub="Supervision en direct · Cap Bon & Grombalia">
     <x-slot name="actions">
+        <span class="bd g" style="font-size:12px;display:inline-flex;align-items:center;gap:6px;">
+            <span style="display:inline-block;width:8px;height:8px;background:#28a745;border-radius:50%;box-shadow:0 0 6px #28a745;animation:pulse-dot 1.5s infinite;"></span>
+            Temps Réel (Sync 6s)
+        </span>
         <x-btn :href="route('ops.dispatch')">🗺️ Ouvrir la carte Dispatch</x-btn>
     </x-slot>
 </x-title>
@@ -159,4 +163,27 @@
         </x-table>
     @endif
 </x-card>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Synchronisation automatique de la console Ops toutes les 6s
+    let lastActiveCount = {{ $activeOrders->count() }};
+    let lastAlertCount = {{ ($hasAlerts ? ($unresponsiveStoreOrders->count() + $unassignedReadyOrders->count() + $openIncidents->count()) : 0) }};
+
+    setInterval(function () {
+        fetch("{{ route('ops.dispatch.live') }}")
+            .then(res => res.json())
+            .then(data => {
+                const currentActive = data.orders ? data.orders.length : 0;
+                // Si une nouvelle commande active ou un changement d'état se produit, actualiser
+                if (currentActive !== lastActiveCount) {
+                    window.location.reload();
+                }
+            })
+            .catch(err => console.log("Sync Ops", err));
+    }, 6000);
+});
+</script>
+@endpush
 @endsection

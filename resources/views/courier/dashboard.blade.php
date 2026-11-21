@@ -129,4 +129,52 @@
         </div>
     </x-card>
 </div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // 1. Diffusion GPS en temps réel continue (Background location)
+    if (navigator.geolocation) {
+        navigator.geolocation.watchPosition(
+            function (pos) {
+                fetch("{{ route('courier.location.ping') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        latitude: pos.coords.latitude,
+                        longitude: pos.coords.longitude,
+                        heading: pos.coords.heading || 0,
+                        speed: pos.coords.speed ? (pos.coords.speed * 3.6) : 0
+                    })
+                }).catch(err => console.log("Ping GPS silencieux", err));
+            },
+            function (err) {
+                console.log("GPS livreur", err);
+            },
+            { enableHighAccuracy: true, maximumAge: 10000, timeout: 8000 }
+        );
+    }
+
+    // 2. Surveillance automatique des nouvelles courses (Sync temps réel 5s)
+    let hadAvailable = {{ $availableOrder ? 'true' : 'false' }};
+    setInterval(function () {
+        fetch(window.location.href, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(res => res.text())
+            .then(html => {
+                // Si une nouvelle course apparaît, recharger doucement
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const hasNow = !!doc.querySelector('.card.hot');
+                if (hasNow && !hadAvailable) {
+                    window.location.reload();
+                }
+            })
+            .catch(err => console.log("Vérification courses", err));
+    }, 5000);
+});
+</script>
+@endpush
 @endsection
