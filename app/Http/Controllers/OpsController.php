@@ -563,11 +563,25 @@ class OpsController extends Controller
         $store = Store::findOrFail($id);
         $name = $store->name;
         
+        $productIds = $store->products()->pluck('products.id');
+        \App\Models\CartItem::whereIn('product_id', $productIds)->delete();
+
         // Supprimer catégories et produits associés
         foreach ($store->categories as $category) {
-            $category->products()->delete();
+            foreach ($category->products as $p) {
+                $p->options()->delete();
+                $p->delete();
+            }
             $category->delete();
         }
+
+        // Supprimer commandes et incidents associés s'il s'agit d'un magasin de test
+        foreach ($store->orders as $order) {
+            $order->items()->delete();
+            $order->incidents()->delete();
+            $order->delete();
+        }
+
         $store->delete();
 
         return redirect()->route('ops.stores')->with('success', "Le restaurant « {$name} » et son menu ont été supprimés.");
@@ -679,6 +693,7 @@ class OpsController extends Controller
     public function productDestroy(Product $product)
     {
         $name = $product->name;
+        \App\Models\CartItem::where('product_id', $product->id)->delete();
         $product->options()->delete();
         $product->delete();
 
