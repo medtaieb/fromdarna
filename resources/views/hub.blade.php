@@ -1,11 +1,11 @@
 @extends('layouts.base')
-@section('title', 'Prototype')
+@section('title', 'Portails FromDarna')
 @section('content')
     <header class="hub-hero reveal">
         <div style="display:flex;justify-content:center;margin-bottom:22px">@include('partials.brand')</div>
         <h1>Cuisine de chez nous, livrée chez vous</h1>
         <p class="ar" style="font-size:20px;color:var(--brown);margin-top:10px">أكل من دارنا لباب دارك</p>
-        <p class="mut" style="margin-top:12px;font-size:15px">Prototype Laravel Blade · Lot 1 (MVP) · Grombalia · données d’exemple</p>
+        <p class="mut" style="margin-top:12px;font-size:15px">Plateforme intégrée de commande et livraison alimentaire · Cap Bon</p>
     </header>
     @php
         $spaces = [

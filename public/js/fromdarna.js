@@ -1,4 +1,4 @@
-/* FromDarna · prototype — JS vanille, aucune dépendance. État du panier dans localStorage. */
+/* FromDarna — JS vanille, aucune dépendance. État du panier dans localStorage. */
 (() => {
   const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
   const fmt = (m) => (m / 1000).toFixed(3).replace('.', ',') + ' TND';

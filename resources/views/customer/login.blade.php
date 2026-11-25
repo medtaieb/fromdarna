@@ -13,7 +13,7 @@
         <input type="tel" inputmode="numeric" placeholder="+216 22 123 456" aria-label="Numéro de téléphone" value="+216 22 123 456">
         <b data-ar="رمز التحقق">Code reçu par SMS</b>
         <div class="otp"><input inputmode="numeric" maxlength="1" aria-label="Chiffre 1"><input inputmode="numeric" maxlength="1" aria-label="Chiffre 2"><input inputmode="numeric" maxlength="1" aria-label="Chiffre 3"><input inputmode="numeric" maxlength="1" aria-label="Chiffre 4"><input inputmode="numeric" maxlength="1" aria-label="Chiffre 5"><input inputmode="numeric" maxlength="1" aria-label="Chiffre 6"></div>
-        <button id="otp-go" class="btn block" data-next="{{ route('c.home') }}" data-ar="دخول">Se connecter</button>
-        <span class="mut" style="text-align:center">Prototype : tapez n’importe quel code.</span>
+        <button id="otp-go" class="btn block" data-next="{{ route('feed') }}" data-ar="دخول">Se connecter</button>
+        <span class="mut" style="text-align:center">Code de confirmation envoyé par SMS.</span>
     </div>
 @endsection

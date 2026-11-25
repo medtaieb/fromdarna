@@ -57,10 +57,8 @@ class AuthController extends Controller
             ])->withInput();
         }
 
-        // Génération du code OTP :
-        // Pour le numéro de test démo (+21620123456), on garde 123456 pour les tests automatisés
-        $isDemoNumber = ($rawPhone === '+21620123456');
-        $otp = $isDemoNumber ? '123456' : $sms->generateOtp();
+        // Génération du code OTP
+        $otp = $sms->generateOtp();
 
         // Enregistrement / mise à jour de l'utilisateur
         $user = User::firstOrCreate(
@@ -89,14 +87,7 @@ class AuthController extends Controller
             'otp_verify_attempts' => 0,
         ]);
 
-        // En environnement local ou avec le driver "log", on aide le développeur avec un message informatif
-        $isLogDriver = config('sms.default') === 'log';
-        if ($isLogDriver || $isDemoNumber) {
-            session(['demo_otp' => $otp]);
-            $notice = "Code SMS envoyé au {$rawPhone} (Mode test : {$otp})";
-        } else {
-            $notice = "Un code de vérification vous a été envoyé par SMS au {$rawPhone}.";
-        }
+        $notice = "Un code de vérification vous a été envoyé par SMS au {$rawPhone}.";
 
         return redirect()->route('otp.verify')->with('info', $notice);
     }
@@ -147,7 +138,7 @@ class AuthController extends Controller
         if ($attempts > $maxAttempts) {
             // Invalider le code après trop d'échecs
             $user->update(['otp_code' => null, 'otp_expires_at' => null]);
-            session()->forget(['auth_phone', 'demo_otp', 'otp_verify_attempts']);
+            session()->forget(['auth_phone', 'otp_verify_attempts']);
             return redirect()->route('login')->with('error', 'Nombre maximal de tentatives dépassé. Veuillez demander un nouveau code.');
         }
 
@@ -166,7 +157,7 @@ class AuthController extends Controller
 
         $sms->clearRateLimit($phone);
         Auth::login($user, true);
-        session()->forget(['auth_phone', 'demo_otp', 'otp_verify_attempts']);
+        session()->forget(['auth_phone', 'otp_verify_attempts']);
 
         return redirect()->route('feed')->with('success', 'Connexion réussie ! Bienvenue sur FromDarna.');
     }

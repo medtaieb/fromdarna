@@ -2,7 +2,7 @@
 @section('title', 'Partenaire · Historique')
 @section('role', 'partner')
 @section('main')
-    <div class="top"><div><h1>Historique et relevés</h1><div class="mut">Versement chaque semaine, commission de 12 % déduite.</div></div><button class="btn o" onclick="document.getElementById('toast').textContent='Relevé exporté (prototype)';document.getElementById('toast').classList.add('show')">Exporter le relevé</button></div>
+    <div class="top"><div><h1>Historique et relevés</h1><div class="mut">Versement chaque semaine, commission de 12 % déduite.</div></div><button class="btn o" onclick="document.getElementById('toast').textContent='Export du relevé hebdomadaire en cours...';document.getElementById('toast').classList.add('show')">Exporter le relevé</button></div>
     <div class="grid">
         <div class="card kpi"><span class="mut">Commandes de la semaine</span><b data-count="43">0</b></div>
         <div class="card kpi"><span class="mut">Chiffre encaissé</span><b data-count="812.500" data-dec="3" data-suffix=" TND">0</b></div>

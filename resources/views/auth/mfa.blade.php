@@ -38,12 +38,7 @@
         </div>
     </div>
 
-    {{-- Raccourci Démo --}}
-    <button type="button" id="fillDemoMfa" style="background:none;border:1px dashed var(--rust);padding:8px 12px;border-radius:10px;color:var(--rust);font-size:13px;cursor:pointer;text-align:left;line-height:1.4">
-        ⚡ <strong>Code test Ops :</strong> cliquer ici pour remplir avec <code>123456</code>
-    </button>
-
-    <button class="btn block" type="submit" style="margin-top:6px">
+    <button class="btn block" type="submit" style="margin-top:12px">
         Valider et accéder à la console Ops ➔
     </button>
 
@@ -61,17 +56,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!inputs.length) return;
 
     inputs[0].focus();
-
-    const fillBtn = document.getElementById('fillDemoMfa');
-    if (fillBtn) {
-        fillBtn.addEventListener('click', () => {
-            const code = '123456';
-            inputs.forEach((input, idx) => {
-                input.value = code[idx] || '';
-            });
-            inputs[inputs.length - 1].focus();
-        });
-    }
 
     inputs[0].addEventListener('paste', (e) => {
         const text = (e.clipboardData || window.clipboardData).getData('text').trim();

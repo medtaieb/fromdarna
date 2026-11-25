@@ -43,14 +43,7 @@
         </div>
     </div>
 
-    {{-- Raccourci Démo si présent --}}
-    @if(session('demo_otp'))
-    <button type="button" id="fillDemoOtp" data-code="{{ session('demo_otp') }}" style="background:none;border:1px dashed var(--olive);padding:8px 12px;border-radius:10px;color:var(--olive);font-size:13px;cursor:pointer;text-align:left;line-height:1.4">
-        ⚡ <strong>Code de test :</strong> cliquer pour insérer le code <code>{{ session('demo_otp') }}</code>
-    </button>
-    @endif
-
-    <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--mut)">
+    <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--mut);margin-top:6px;">
         <span>Valable encore : <b id="otpCountdown" style="color:var(--rust)">09:59</b></span>
         <a href="{{ route('login') }}" style="color:var(--rust);text-decoration:none;font-weight:600">Renvoyer</a>
     </div>
@@ -74,18 +67,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Focus automatique sur le premier champ
     inputs[0].focus();
-
-    // Remplissage rapide démo
-    const fillBtn = document.getElementById('fillDemoOtp');
-    if (fillBtn) {
-        fillBtn.addEventListener('click', () => {
-            const demoCode = fillBtn.dataset.code || '123456';
-            inputs.forEach((input, idx) => {
-                input.value = demoCode[idx] || '';
-            });
-            inputs[inputs.length - 1].focus();
-        });
-    }
 
     // Gestion du copier/coller d'un code complet
     inputs[0].addEventListener('paste', (e) => {
