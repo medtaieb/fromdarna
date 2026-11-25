@@ -17,15 +17,29 @@
 <div class="al g"><span>Rapprochement du jour : <strong>aucun écart</strong></span><x-badge type="g">Équilibré</x-badge></div>
 
 <x-card>
-    <h2>Exemple : une commande cash de 28,000 TND</h2>
-    <x-table :headers="['#', 'Moment', 'Débit', 'Crédit', 'Montant']" :rows="[
-        ['1', 'Livraison, cash encaissé', 'Cash détenu par le livreur', 'Compensation commande', '28,000 TND'],
-        ['2', 'Répartition', 'Compensation commande', 'Dû au restaurant', '25,000 TND'],
-        ['3', 'Répartition', 'Compensation commande', 'Produit : frais de livraison', '3,000 TND'],
-        ['4', 'Commission 12 %', 'Dû au restaurant', 'Produit : commission', '3,000 TND'],
-        ['5', 'Gain du livreur', 'Charge : rémunération livreurs', 'Dû au livreur', '3,000 TND'],
-        ['6', 'Remise du cash au QG', 'Caisse QG + Dû au livreur', 'Cash détenu par le livreur', '28,000 TND'],
-        ['7', 'Versement hebdomadaire', 'Dû au restaurant', 'Banque', '22,000 TND'],
-    ]" />
+    <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <h2 style="margin:0;">Journal des écritures comptables réelles (Partie double)</h2>
+        <span class="bd g">{{ count($lines) }} écriture(s)</span>
+    </div>
+
+    @if(empty($lines))
+        <div style="text-align:center;padding:36px;border:1.5px dashed var(--line);border-radius:12px">
+            <span style="font-size:32px">📒</span>
+            <p class="mut" style="margin-top:8px">Aucune écriture comptable pour l'instant. Les écritures se génèrent automatiquement à chaque commande livrée ou remise d'espèces validée par le QG.</p>
+        </div>
+    @else
+        <x-table :headers="['#', 'Date / Heure', 'Opération', 'Compte Débité', 'Compte Crédité', 'Montant']">
+            @foreach($lines as $l)
+                <tr>
+                    <td><b>{{ $l['num'] }}</b></td>
+                    <td class="mut" style="font-size:0.85rem;">{{ $l['date'] }}</td>
+                    <td><b>{{ $l['moment'] }}</b></td>
+                    <td style="color:#2D5A27;font-weight:600;">{{ $l['debit'] }}</td>
+                    <td style="color:#98551C;font-weight:600;">{{ $l['credit'] }}</td>
+                    <td><strong>{{ \App\Support\Money::tnd($l['amount']) }}</strong></td>
+                </tr>
+            @endforeach
+        </x-table>
+    @endif
 </x-card>
 @endsection

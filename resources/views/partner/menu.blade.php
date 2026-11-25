@@ -10,7 +10,7 @@
                 @foreach ($store['items'] as $it)
                     <tr class="up" style="--i:{{ $loop->index }}">
                         <td><b class="name">{{ $it['name'] }}</b><div class="ar mut">{{ $it['ar'] }}</div></td>
-                        <td>{{ App\Support\Demo::tnd($it['price']) }}</td>
+                        <td>{{ \App\Support\Money::tnd($it['price']) }}</td>
                         <td class="st">Disponible</td>
                         <td><label class="switch"><input type="checkbox" data-row checked aria-label="En vente : {{ $it['name'] }}"><i></i></label></td>
                     </tr>

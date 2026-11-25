@@ -10,7 +10,7 @@
     </div>
     <div class="card scroll-x"><table><thead><tr><th>Commande</th><th>Date</th><th>État</th><th>Total</th><th>Commission</th></tr></thead><tbody>
         @foreach ($rows as [$id, $d, $s, $t, $c])
-            <tr><td><b>{{ $id }}</b></td><td>{{ $d }}</td><td><span class="bd {{ $s === 'Livrée' ? 'ok' : 'nt' }}">{{ $s }}</span></td><td>{{ App\Support\Demo::tnd($t) }}</td><td>{{ App\Support\Demo::tnd($c) }}</td></tr>
+            <tr><td><b>{{ $id }}</b></td><td>{{ $d }}</td><td><span class="bd {{ $s === 'Livrée' ? 'ok' : 'nt' }}">{{ $s }}</span></td><td>{{ \App\Support\Money::tnd($t) }}</td><td>{{ \App\Support\Money::tnd($c) }}</td></tr>
         @endforeach
     </tbody></table></div>
 @endsection

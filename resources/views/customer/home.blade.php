@@ -14,10 +14,14 @@
     <div class="chips"><button class="chip on">Restaurants</button><button class="chip">Pâtisseries</button><button class="chip">Cafés</button></div>
     <div class="row between"><h2 style="font-size:20px" data-ar="مفتوح الآن">Ouverts maintenant</h2></div>
     @foreach ($stores as $s)
-        <a href="{{ route('c.store', $s['id']) }}" class="card row up" style="--i:{{ $loop->index }};padding:14px">
-            <div class="tile" style="background:linear-gradient(135deg,{{ $s['c1'] }},{{ $s['c2'] }})">{{ mb_substr($s['name'], 0, 1) }}</div>
-            <div class="grow col" style="gap:4px"><b>{{ $s['name'] }}</b><span class="mut">{{ $s['cuisine'] }}</span><span class="mut">{{ $s['eta'] }} · Livraison {{ App\Support\Demo::tnd(3000) }}</span></div>
-            <span class="bd {{ $s['open'] ? 'ok' : 'nt' }}">{{ $s['open'] ? 'Ouvert' : 'Occupé' }}</span>
+        <a href="{{ route('store', $s->id) }}" class="card row up" style="--i:{{ $loop->index }};padding:14px">
+            <div class="tile" style="background:linear-gradient(135deg,{{ $s->c1 ?? '#98551C' }},{{ $s->c2 ?? '#B08861' }})">{{ mb_substr($s->name, 0, 1) }}</div>
+            <div class="grow col" style="gap:4px">
+                <b>{{ $s->name }}</b>
+                <span class="mut">{{ $s->kind }}</span>
+                <span class="mut">⏱️ ≈ {{ $s->avg_prep_minutes + 15 }} min · Livraison {{ \App\Support\Money::tnd($s->zone?->delivery_fee_millimes ?? 3000) }}</span>
+            </div>
+            <span class="bd {{ $s->is_open ? 'ok' : 'nt' }}">{{ $s->is_open ? 'Ouvert' : 'Fermé' }}</span>
         </a>
     @endforeach
 @endsection

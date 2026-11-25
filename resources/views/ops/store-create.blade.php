@@ -57,11 +57,12 @@
             <h2>Conditions Commerciales & Dispatch</h2>
             <div class="grid g2">
                 <x-field 
-                    label="Taux de Commission (bps) *" 
-                    name="commission_bps" 
+                    label="Taux de Commission (%) *" 
+                    name="commission_percent" 
                     type="number" 
-                    :value="old('commission_bps', 1200)" 
-                    helper="1200 bps = 12% standard FromDarna" 
+                    step="0.5"
+                    :value="old('commission_percent', 12)" 
+                    helper="Ex: 12% standard FromDarna" 
                     required 
                 />
                 <x-field 

@@ -11,7 +11,11 @@ use Illuminate\Support\Facades\Auth;
 class CustomerController extends Controller
 {
     public function login() { return view('customer.login'); }
-    public function home() { return view('customer.home', ['stores' => Demo::stores()]); }
+    public function home() 
+    { 
+        $stores = \App\Models\Store::with('zone')->where('is_open', true)->get();
+        return view('customer.home', compact('stores')); 
+    }
     public function feed(Request $request)
     {
         $category = $request->query('category', 'all');

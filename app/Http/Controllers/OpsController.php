@@ -449,19 +449,24 @@ class OpsController extends Controller
     public function storeStore(Request $request)
     {
         $validated = $request->validate([
-            'name'               => 'required|string|max:100',
-            'zone_id'            => 'required|exists:zones,id',
-            'kind'               => 'required|string|max:100',
-            'emoji'              => 'nullable|string|max:10',
-            'commission_bps'     => 'required|integer|min:0|max:5000',
-            'avg_prep_minutes'   => 'required|integer|min:5|max:120',
-            'min_order_millimes' => 'nullable|integer|min:0',
-            'phone'              => 'nullable|string|max:20',
-            'address'            => 'nullable|string|max:255',
-            'latitude'           => 'nullable|numeric',
-            'longitude'          => 'nullable|numeric',
-            'is_open'            => 'nullable|boolean',
+            'name'                 => 'required|string|max:100',
+            'zone_id'              => 'required|exists:zones,id',
+            'kind'                 => 'required|string|max:100',
+            'emoji'                => 'nullable|string|max:10',
+            'commission_percent'   => 'nullable|numeric|min:0|max:50',
+            'commission_bps'       => 'nullable|integer|min:0|max:5000',
+            'avg_prep_minutes'     => 'required|integer|min:5|max:120',
+            'min_order_millimes'   => 'nullable|integer|min:0',
+            'phone'                => 'nullable|string|max:20',
+            'address'              => 'nullable|string|max:255',
+            'latitude'             => 'nullable|numeric',
+            'longitude'            => 'nullable|numeric',
+            'is_open'              => 'nullable|boolean',
         ]);
+
+        $commBps = isset($validated['commission_percent'])
+            ? (int) round(((float)$validated['commission_percent']) * 100)
+            : ($validated['commission_bps'] ?? 1200);
 
         $baseSlug = Str::slug($validated['name']);
         $slug = $baseSlug;
@@ -476,7 +481,7 @@ class OpsController extends Controller
             'zone_id'            => $validated['zone_id'],
             'kind'               => $validated['kind'],
             'emoji'              => $validated['emoji'] ?? '🍽️',
-            'commission_bps'     => $validated['commission_bps'],
+            'commission_bps'     => $commBps,
             'avg_prep_minutes'   => $validated['avg_prep_minutes'],
             'min_order_millimes' => $validated['min_order_millimes'] ?? 10000,
             'phone'              => $validated['phone'] ?? '+216 72 000 000',
@@ -514,24 +519,29 @@ class OpsController extends Controller
         $store = Store::findOrFail($id);
 
         $validated = $request->validate([
-            'name'             => 'required|string|max:100',
-            'kind'             => 'nullable|string|max:100',
-            'emoji'            => 'nullable|string|max:10',
-            'commission_bps'   => 'required|integer|min:0|max:5000',
-            'avg_prep_minutes' => 'required|integer|min:5|max:120',
-            'phone'            => 'nullable|string|max:20',
-            'address'          => 'nullable|string|max:255',
-            'latitude'         => 'nullable|numeric',
-            'longitude'        => 'nullable|numeric',
-            'zone_id'          => 'required|exists:zones,id',
-            'is_open'          => 'nullable|boolean',
+            'name'                 => 'required|string|max:100',
+            'kind'                 => 'nullable|string|max:100',
+            'emoji'                => 'nullable|string|max:10',
+            'commission_percent'   => 'nullable|numeric|min:0|max:50',
+            'commission_bps'       => 'nullable|integer|min:0|max:5000',
+            'avg_prep_minutes'     => 'required|integer|min:5|max:120',
+            'phone'                => 'nullable|string|max:20',
+            'address'              => 'nullable|string|max:255',
+            'latitude'             => 'nullable|numeric',
+            'longitude'            => 'nullable|numeric',
+            'zone_id'              => 'required|exists:zones,id',
+            'is_open'              => 'nullable|boolean',
         ]);
+
+        $commBps = isset($validated['commission_percent'])
+            ? (int) round(((float)$validated['commission_percent']) * 100)
+            : ($validated['commission_bps'] ?? $store->commission_bps ?? 1200);
 
         $store->update([
             'name'             => $validated['name'],
             'kind'             => $validated['kind'] ?? $store->kind,
             'emoji'            => $validated['emoji'] ?? $store->emoji,
-            'commission_bps'   => $validated['commission_bps'],
+            'commission_bps'   => $commBps,
             'avg_prep_minutes' => $validated['avg_prep_minutes'],
             'phone'            => $validated['phone'],
             'address'          => $validated['address'],
@@ -832,15 +842,103 @@ class OpsController extends Controller
         $fleetCash = $couriers->sum(fn ($c) => $c->getHeldCashMillimes());
         $hqCash = CourierCashDrop::where('status', 'validated')->sum('amount_millimes');
 
-        $deliveredOrders = Order::where('status', 'DELIVERED')->get();
+        $deliveredOrders = Order::where('status', 'DELIVERED')->with(['store', 'courier'])->latest()->get();
         $deliveredCount = $deliveredOrders->count();
         $couriersDue = $deliveredCount * 2500; // 2.500 TND par course
 
         $totalSubtotal = $deliveredOrders->sum('subtotal_millimes');
-        $restaurantsDue = (int) round($totalSubtotal * 0.88); // 88% net après commission 12%
+        $restaurantsDue = (int) round($totalSubtotal * 0.88); // 88% net après commission standard 12%
+
+        // Génération dynamique des écritures comptables réelles en partie double
+        $lines = [];
+        $lineNum = 1;
+
+        // 1. Écritures issues des commandes livrées
+        foreach ($deliveredOrders as $order) {
+            $ref = '#' . $order->ref;
+            $courierName = $order->courier?->name ?? 'Livreur';
+            $storeName = $order->store?->name ?? 'Restaurant';
+            $commBps = $order->store?->commission_bps ?? 1200;
+            $commRate = $commBps / 10000;
+            $commAmount = (int) round($order->subtotal_millimes * $commRate);
+            $storeNet = $order->subtotal_millimes - $commAmount;
+            $date = $order->delivered_at?->format('d/m/Y H:i') ?? $order->created_at->format('d/m/Y H:i');
+
+            // Encaissement espèces de la commande
+            $lines[] = [
+                'num'    => $lineNum++,
+                'date'   => $date,
+                'moment' => "Encaissement espèces commande {$ref}",
+                'debit'  => "Cash détenu par {$courierName}",
+                'credit' => "Compensation commande {$ref}",
+                'amount' => $order->total_millimes,
+                'type'   => 'cash',
+            ];
+
+            // Répartition quote-part restaurant
+            $lines[] = [
+                'num'    => $lineNum++,
+                'date'   => $date,
+                'moment' => "Part nette restaurant {$ref}",
+                'debit'  => "Compensation commande {$ref}",
+                'credit' => "Dû au restaurant ({$storeName})",
+                'amount' => $storeNet,
+                'type'   => 'split',
+            ];
+
+            // Commission FromDarna
+            $lines[] = [
+                'num'    => $lineNum++,
+                'date'   => $date,
+                'moment' => "Commission FromDarna (" . ($commBps / 100) . "%)",
+                'debit'  => "Compensation commande {$ref}",
+                'credit' => "Produit : Commission FromDarna",
+                'amount' => $commAmount,
+                'type'   => 'revenue',
+            ];
+
+            // Frais de livraison
+            if ($order->delivery_fee_millimes > 0) {
+                $lines[] = [
+                    'num'    => $lineNum++,
+                    'date'   => $date,
+                    'moment' => "Frais de livraison {$ref}",
+                    'debit'  => "Compensation commande {$ref}",
+                    'credit' => "Produit : Frais de livraison",
+                    'amount' => $order->delivery_fee_millimes,
+                    'type'   => 'revenue',
+                ];
+            }
+
+            // Rémunération du livreur
+            $lines[] = [
+                'num'    => $lineNum++,
+                'date'   => $date,
+                'moment' => "Rémunération course {$ref}",
+                'debit'  => "Charge : Rémunération livreurs",
+                'credit' => "Dû au livreur ({$courierName})",
+                'amount' => 2500,
+                'type'   => 'expense',
+            ];
+        }
+
+        // 2. Écritures issues des dépôts de cash physiques validés au QG
+        $validatedDrops = CourierCashDrop::where('status', 'validated')->with(['courier', 'validator'])->latest()->get();
+        foreach ($validatedDrops as $drop) {
+            $date = $drop->validated_at?->format('d/m/Y H:i') ?? $drop->created_at->format('d/m/Y H:i');
+            $lines[] = [
+                'num'    => $lineNum++,
+                'date'   => $date,
+                'moment' => "Dépôt physique espèces QG #{$drop->reference}",
+                'debit'  => "Caisse physique QG",
+                'credit' => "Cash détenu par " . ($drop->courier?->name ?? 'Livreur'),
+                'amount' => $drop->amount_millimes,
+                'type'   => 'drop',
+            ];
+        }
 
         return view('ops.ledger', [
-            'lines'          => Demo::ledger(),
+            'lines'          => $lines,
             'fleetCash'      => $fleetCash,
             'hqCash'         => $hqCash,
             'restaurantsDue' => $restaurantsDue,

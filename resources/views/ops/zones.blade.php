@@ -59,7 +59,7 @@
         <x-table :headers="['Paramètre standard', 'Valeur en vigueur']" :rows="[
             ['Plafond max de cash par livreur', '150,000 TND (150 000 millimes)'],
             ['Rémunération livreur par course', '2,500 TND'],
-            ['Taux de commission standard partenaire', '12 % (1200 bps)'],
+            ['Taux de commission standard partenaire', '12 %'],
             ['Fréquence synchronisation GPS', 'Toutes les 4 secondes'],
             ['Délai alerte réponse restaurant', '60 secondes'],
         ]" />

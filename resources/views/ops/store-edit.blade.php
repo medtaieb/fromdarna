@@ -50,7 +50,7 @@
             </div>
             
             <div class="grid g2">
-                <x-field label="Commission (bps, 1200 = 12%) *" name="commission_bps" type="number" :value="old('commission_bps', $store->commission_bps ?? 1200)" required />
+                <x-field label="Commission (%) *" name="commission_percent" type="number" step="0.5" :value="old('commission_percent', ($store->commission_bps ?? 1200) / 100)" helper="Ex: 12%" required />
                 <x-field label="Préparation moyenne (minutes) *" name="avg_prep_minutes" type="number" :value="old('avg_prep_minutes', $store->avg_prep_minutes ?? 15)" required />
             </div>
 

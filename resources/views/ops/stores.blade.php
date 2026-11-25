@@ -29,11 +29,10 @@
                     <div class="mut" style="font-size:0.8rem;">📍 {{ $s->zone?->name ?? 'Grombalia' }} · {{ $s->address }}</div>
                 </td>
                 <td>
-                    <span style="font-size:1.1rem;margin-right:4px;">{{ $s->emoji }}</span> {{ $s->kind }}
+                    <b>{{ $s->kind }}</b>
                 </td>
                 <td>
-                    <b>{{ ($s->commission_bps ?? 1200) / 100 }} %</b>
-                    <div class="mut" style="font-size:0.75rem;">({{ $s->commission_bps }} bps)</div>
+                    <strong style="color:var(--olive);">{{ ($s->commission_bps ?? 1200) / 100 }} %</strong>
                 </td>
                 <td>
                     ⏱️ ≈ {{ $s->avg_prep_minutes }} min
