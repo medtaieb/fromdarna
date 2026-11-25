@@ -13,6 +13,7 @@
 </head>
 <body class="@yield('bodyclass')">
     @yield('body')
+    <script src="{{ asset('js/notifier.js') }}"></script>
     <script src="{{ asset('js/app.js') }}" defer></script>
     @stack('scripts')
 </body>

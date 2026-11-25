@@ -74,8 +74,11 @@
         </div>
     </div>
     <div style="display:flex;align-items:center;gap:10px">
+        <button id="btn-enable-notifs" class="btn sm olive glow" type="button" style="display:none;" title="Recevoir les alertes sur l'écran">
+            🔔 Activer notifications
+        </button>
         <button id="btn-test-sound" class="btn ghost sm" type="button" title="Tester l'alerte sonore">
-            🔔 Tester le son
+            🔊 Tester le son
         </button>
         <form method="POST" action="{{ route('partner.store.toggle', $store) }}" style="display:inline">
             @csrf
@@ -330,11 +333,34 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    // Gestion des notifications système
+    const btnNotifs = document.getElementById('btn-enable-notifs');
+    if (btnNotifs && "Notification" in window) {
+        if (Notification.permission !== "granted") {
+            btnNotifs.style.display = 'inline-block';
+            btnNotifs.addEventListener('click', function () {
+                FromDarnaNotifier.requestPermission(function (perm) {
+                    if (perm === "granted") {
+                        btnNotifs.style.display = 'none';
+                        FromDarnaNotifier.send("✓ Notifications activées !", {
+                            body: "Vous recevrez les alertes de commandes même en arrière-plan.",
+                            soundType: 'success'
+                        });
+                    }
+                });
+            });
+        }
+    }
+
     // Bouton de test du son
     const btnSound = document.getElementById('btn-test-sound');
     if (btnSound) {
         btnSound.addEventListener('click', function () {
-            playKitchenChime();
+            FromDarnaNotifier.playBeep('default');
+            FromDarnaNotifier.send("Test d'alerte cuisine", {
+                body: "Le carillon de notification fonctionne correctement.",
+                soundType: 'default'
+            });
         });
     }
 
@@ -348,10 +374,17 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(data => {
                 if (data.new_count > previousNewCount || (previousActiveCount !== null && data.active_count !== previousActiveCount)) {
                     if (data.new_count > previousNewCount) {
-                        playKitchenChime();
+                        const first = data.new_orders && data.new_orders[0] ? data.new_orders[0] : null;
+                        const refText = first ? ` #${first.ref} (${first.total_tnd})` : '';
+                        
+                        FromDarnaNotifier.send("🔔 Nouvelle commande reçue !", {
+                            body: `Commande${refText} en attente de préparation en cuisine !`,
+                            soundType: 'urgent',
+                            vibrate: [300, 150, 300]
+                        });
                     }
                     // Recharger la page pour synchroniser la console en direct
-                    window.location.reload();
+                    setTimeout(() => window.location.reload(), 1200);
                 }
                 previousNewCount = data.new_count;
                 previousActiveCount = data.active_count;

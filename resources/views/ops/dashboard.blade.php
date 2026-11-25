@@ -167,6 +167,14 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    // Permission de notification pour l'opérateur Ops
+    if ("Notification" in window && Notification.permission === "default") {
+        document.body.addEventListener('click', function requestOpsNotifs() {
+            FromDarnaNotifier.requestPermission();
+            document.body.removeEventListener('click', requestOpsNotifs);
+        }, { once: true });
+    }
+
     // Synchronisation automatique de la console Ops toutes les 6s
     let lastActiveCount = {{ $activeOrders->count() }};
     let lastAlertCount = {{ ($hasAlerts ? ($unresponsiveStoreOrders->count() + $unassignedReadyOrders->count() + $openIncidents->count()) : 0) }};
@@ -176,9 +184,16 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(res => res.json())
             .then(data => {
                 const currentActive = data.orders ? data.orders.length : 0;
-                // Si une nouvelle commande active ou un changement d'état se produit, actualiser
+                // Si une nouvelle commande active ou un changement d'état se produit, notifier et actualiser
                 if (currentActive !== lastActiveCount) {
-                    window.location.reload();
+                    if (currentActive > lastActiveCount) {
+                        FromDarnaNotifier.send("🚨 Nouvelle commande sur le réseau !", {
+                            body: "Une nouvelle commande est entrée en supervision.",
+                            soundType: 'urgent',
+                            vibrate: [200, 100, 200]
+                        });
+                    }
+                    setTimeout(() => window.location.reload(), 1200);
                 }
             })
             .catch(err => console.log("Sync Ops", err));

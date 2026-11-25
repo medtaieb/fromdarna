@@ -27,7 +27,12 @@
 
 <div class="cols">
     <x-card>
-        <h2>Où en est ma commande ?</h2>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <h2 style="margin:0;">Où en est ma commande ?</h2>
+            <button id="btn-cust-notif" class="btn sm ghost" style="display:none;padding:3px 8px;font-size:12px;" type="button">
+                🔔 Activer alertes
+            </button>
+        </div>
         @php
             $statusOrder = ['PLACED', 'ACCEPTED', 'READY', 'PICKED_UP', 'DELIVERED'];
             $currentIdx  = array_search($order->status, $statusOrder);
@@ -142,6 +147,25 @@ document.addEventListener('DOMContentLoaded', function () {
     // Ajuster vue
     map.fitBounds(L.featureGroup(boundsGroup).getBounds().pad(0.2));
 
+    // Gestion des notifications client
+    const btnCustNotif = document.getElementById('btn-cust-notif');
+    if (btnCustNotif && "Notification" in window) {
+        if (Notification.permission !== "granted") {
+            btnCustNotif.style.display = 'inline-block';
+            btnCustNotif.addEventListener('click', function () {
+                FromDarnaNotifier.requestPermission(function (perm) {
+                    if (perm === "granted") {
+                        btnCustNotif.style.display = 'none';
+                        FromDarnaNotifier.send("✓ Suivi activé !", {
+                            body: "Vous serez prévenu(e) à chaque étape de votre commande.",
+                            soundType: 'success'
+                        });
+                    }
+                });
+            });
+        }
+    }
+
     // Polling en temps réel pour suivre le livreur (Sync 3.5s)
     let currentStatus = "{{ $order->status }}";
     function pollTracking() {
@@ -149,8 +173,32 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(res => res.json())
             .then(data => {
                 if (data.status && data.status !== currentStatus) {
-                    // Si le restaurant accepte, prépare ou livre, recharger pour actualiser les étapes
-                    window.location.reload();
+                    // Notifier le client du changement d'étape
+                    if (data.status === 'ACCEPTED') {
+                        FromDarnaNotifier.send("👨‍🍳 Commande acceptée !", {
+                            body: "Le restaurant a validé et prépare vos plats.",
+                            soundType: 'success'
+                        });
+                    } else if (data.status === 'READY') {
+                        FromDarnaNotifier.send("🍽️ Vos plats sont prêts !", {
+                            body: "Votre commande est prête, le livreur la récupère.",
+                            soundType: 'default'
+                        });
+                    } else if (data.status === 'PICKED_UP') {
+                        FromDarnaNotifier.send("🛵 Livreur en route !", {
+                            body: "Le livreur arrive avec votre repas à votre porte.",
+                            soundType: 'urgent',
+                            vibrate: [300, 150, 300]
+                        });
+                    } else if (data.status === 'DELIVERED') {
+                        FromDarnaNotifier.send("✅ Commande livrée !", {
+                            body: "Bon appétit de la part de toute l'équipe FromDarna !",
+                            soundType: 'success'
+                        });
+                    }
+
+                    // Recharger pour actualiser les étapes et la carte
+                    setTimeout(() => window.location.reload(), 1200);
                     return;
                 }
 

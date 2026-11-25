@@ -158,18 +158,33 @@ document.addEventListener('DOMContentLoaded', function () {
         );
     }
 
-    // 2. Surveillance automatique des nouvelles courses (Sync temps réel 5s)
+    // 2. Surveillance automatique des nouvelles courses (Sync temps réel 5s + Notification)
     let hadAvailable = {{ $availableOrder ? 'true' : 'false' }};
+
+    // Demande de permission notification pour le livreur
+    if ("Notification" in window && Notification.permission === "default") {
+        document.body.addEventListener('click', function requestOnce() {
+            FromDarnaNotifier.requestPermission();
+            document.body.removeEventListener('click', requestOnce);
+        }, { once: true });
+    }
+
     setInterval(function () {
         fetch(window.location.href, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
             .then(res => res.text())
             .then(html => {
-                // Si une nouvelle course apparaît, recharger doucement
+                // Si une nouvelle course apparaît, notifier et recharger
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(html, 'text/html');
                 const hasNow = !!doc.querySelector('.card.hot');
                 if (hasNow && !hadAvailable) {
-                    window.location.reload();
+                    hadAvailable = true;
+                    FromDarnaNotifier.send("🛵 Nouvelle course disponible !", {
+                        body: "Une commande est prête en cuisine pour livraison. Ouvrez pour accepter.",
+                        soundType: 'urgent',
+                        vibrate: [400, 200, 400]
+                    });
+                    setTimeout(() => window.location.reload(), 1500);
                 }
             })
             .catch(err => console.log("Vérification courses", err));
